@@ -1,24 +1,20 @@
-import { Op, op, pure, Cancel, cont, use, run, Cont } from '../src'
+import { Op, op, pure, Cancel, cont, use, Cont, unsafeRunEffects } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-interface Async {
-  runAsync <A>(f: (k: (a: A) => unknown) => Cancel): Cont<A, unknown, Cancel>
-}
-
 interface Print {
-  print(s: string): void
+  print (s: string): void
 }
 
 const print = (s: string): Op<Print, void> =>
   op(c => pure(c.print(s)))
 
 interface Read {
-  read (k: (s: string) => void): Cancel
+  read (k: (s: string) => unknown): Cancel
 }
 
-const read: Op<Read & Async, string> =
-  op(c => c.runAsync(c.read))
+const read: Op<Read, string> =
+  op(c => cont(c.read))
 
 function *main () {
   while(true) {
@@ -32,23 +28,19 @@ const readline = createInterface({
   input: process.stdin
 })
 
-const c = use(main(), {
-  runAsync <A>(f: (k: (a: A) => unknown) => Cancel): Cont<A, unknown, Cancel> {
-    return cont(f)
-  },
+const capabilities = {
   print (s: string): void {
     process.stdout.write(s)
   },
-  read (k: (s: string) => void): Cancel {
+  read (k: (s: string) => unknown): Cancel {
     readline.once('line', k)  
     return ck => { 
-      readline.removeListener('line', k)
-      readline.close()
+      readline.removeListener('line', k).close()
       return ck()
     }
   }
-})
+}
 
-const r = run(c)
+const c = use(main(), capabilities)
 
-const cancel = r(a => () => {})
+unsafeRunEffects(c)
