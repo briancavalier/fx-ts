@@ -1,8 +1,13 @@
 import { Env } from "./env"
 
-// A Computation is a sequence of effects. Between those effects,
-// there can be any number of pure functions. To execute an effectful
-// computation, we only need to be able to access its effects.
+// A Computation is a sequence of effects, each of which requires a set
+// of capabilities. Between those effects, there can be any number of
+// pure functions.
+// To execute an effectful computation, we only need to be able to access
+// its effects.  Thus, we can represent a Computation as an Iterable
+// over its effects.  This makes it quite natural to implement effectful
+// computations by writing a generator function that yields effects.
+// Pure code simply executes between the yields.
 export interface Computation<Y, R, N> {
   [Symbol.iterator](): Iterator<Y, R, N>
 }
