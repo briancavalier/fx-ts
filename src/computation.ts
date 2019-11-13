@@ -18,6 +18,7 @@ export class GeneratorComputation<A extends readonly any[], Y, R, N> implements 
   }
 }
 
+// Computation wrapper to yield a single value.
 export class SingletonComputation<Y, A> implements Computation<Y, A, A> {
   constructor(public readonly value: Y) {}
   [Symbol.iterator](): Iterator<Y, A, A> {
@@ -37,10 +38,13 @@ export class SingletonComputationIterator<Y, A> implements Iterator<Y, A, A> {
   }
 }
 
+// Get an iterator over a computation's effects.
+// Mostly this exists to avoid sprinkling ugly [Symbol.iterator]()
+// calls all over the code
 export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y, R, N> =>
   c[Symbol.iterator]()
 
-  // Turn an Env-yielding generator into a computation
+// Turn an Env-yielding generator into a computation
 export const co = <A extends readonly any[], Y, R, N> (f: (...args: A) => Generator<Y, R, N>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => new GeneratorComputation(args, f)
 

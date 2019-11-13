@@ -1,3 +1,6 @@
+// Delimited continuation monad with polymorphic answer types
+// in the spirit of:
+// http://okmij.org/ftp/continuations/implementations.html#genuine-shift
 export class Cont<A, R, S> {
   constructor(public readonly runCont: (k: (a: A) => R) => S) {}
 }
