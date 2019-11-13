@@ -1,4 +1,4 @@
-import { Op, op, pure, Cancel, cont, use, Cont, unsafeRunEffects } from '../src'
+import { Op, op, pure, Cancel, cont, use, unsafeRunEffects } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
