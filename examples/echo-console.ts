@@ -3,7 +3,7 @@ import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 interface Async {
-  runAsync <A>(f: (k: (a: A) => void) => Cancel): Cont<A, Cancel, Cancel>
+  runAsync <A>(f: (k: (a: A) => unknown) => Cancel): Cont<A, unknown, Cancel>
 }
 
 interface Print {
@@ -33,8 +33,8 @@ const readline = createInterface({
 })
 
 const c = use(main(), {
-  runAsync <A>(f: (k: (a: A) => void) => Cancel): Cont<A, Cancel, Cancel> {
-    return cont(k => f(k))
+  runAsync <A>(f: (k: (a: A) => unknown) => Cancel): Cont<A, unknown, Cancel> {
+    return cont(f)
   },
   print (s: string): void {
     process.stdout.write(s)
@@ -51,4 +51,4 @@ const c = use(main(), {
 
 const r = run(c)
 
-const cancel = r.runCont(a => () => {})
+const cancel = r(a => () => {})
