@@ -10,8 +10,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^12.12.7",
-    "ts-node": "^8.5.0",
-    "typescript": "^3.7.2"
+    "@types/node": "12.12.7",
+    "ts-node": "8.5.0",
+    "typescript": "3.7.2"
   }
 }
