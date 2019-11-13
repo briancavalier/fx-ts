@@ -2,9 +2,12 @@
   "name": "fx-ts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "module": "dist/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
