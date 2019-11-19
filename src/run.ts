@@ -19,7 +19,7 @@ export const unsafeRunEffects = <R, N> (g: Computation<never, R, N>): Cancel =>
 export const runComputation = <R, N> (g: Computation<never, R, N>): Result<R> =>
   step(startComputation(g), undefined)
 
-// Unsafe
+// Unsafe types, but provides stack safety for synchronous capabilities
 const step = <E extends Env<object, N>, R, N> (i: Iterator<E, R, N>, x: N): Result<R> => {
   let ir = i.next(x)
 
