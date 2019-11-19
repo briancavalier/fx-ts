@@ -1,4 +1,3 @@
 export * from './computation'
-export * from './cont'
-export * from './env'
+export * from './result'
 export * from './run'

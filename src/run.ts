@@ -1,12 +1,12 @@
-import { Computation, startComputation } from './computation'
-import { Cancel, Env } from './env'
-import { Cont, chainCont, pure } from './cont'
+import { Computation, startComputation, Env } from './computation'
+import { Cancel, Result, Now, chainResult, runResult } from './result'
 
 const uncancelable = (): Cancel => () => {}
+const emptyCapabilities = {}
 
 // Execute a computation, producing all its effects
-export const unsafeRunEffects = <A, N> (g: Computation<never, A, N>): Cancel =>
-  runComputation(g)(uncancelable)
+export const unsafeRunEffects = <R, N> (g: Computation<never, R, N>): Cancel =>
+  runResult(runComputation(g), uncancelable)
 
 // Run a "pure" computation, that is, one that never yields any impure Envs.
 // In reality, this returns a Cont that will proceed with any async effects.
@@ -16,12 +16,19 @@ export const unsafeRunEffects = <A, N> (g: Computation<never, A, N>): Cancel =>
 // computation that only yields pure Envs is morally equivalent to a computation
 // that never yields any Envs.
 // In both cases, there are no required capabilities to satisfy.
-export const runComputation = <A, N> (g: Computation<never, A, N>): Cont<A, Cancel, Cancel> =>
+export const runComputation = <R, N> (g: Computation<never, R, N>): Result<R> =>
   step(startComputation(g), undefined)
 
-export const step = <E extends Env<any, N>, A, N> (i: Iterator<E, A, N>, x: N): Cont<A, Cancel, Cancel> => {
+// Unsafe
+const step = <E extends Env<object, N>, R, N> (i: Iterator<E, R, N>, x: N): Result<R> => {
   let ir = i.next(x)
-  return ir.done ? pure(ir.value)
-    : chainCont((ir.value as E)({}) as Cont<N, Cancel, Cancel>, a => step(i, a))
+
+  while(!ir.done) {
+    const r = (ir.value as E)(emptyCapabilities)
+    if (r instanceof Now) ir = i.next(r.value)
+    else return chainResult(r, n => step(i, n))
+  }
+
+  return new Now(ir.value)
 }
 
