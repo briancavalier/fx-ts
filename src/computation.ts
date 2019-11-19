@@ -60,7 +60,7 @@ export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y,
   c[Symbol.iterator]()
 
 // Turn an Env-yielding generator into a computation
-export const co = <A extends readonly any[], Y, R, N> (f: (...args: A) => Generator<Y, R, N>): ((...args: A) => Computation<Y, R, any>) =>
+export const co = <A extends readonly any[], Y, R, N> (f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => new GeneratorComputation(args, f)
 
 // Alias for a computation that requires capabilities C
