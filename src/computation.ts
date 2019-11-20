@@ -7,6 +7,13 @@ import { Result, pure } from './result'
 // mixing sync effects and async effects which require cancelability.
 export type Env<C, A> = (c: C) => Result<A>
 
+type U2I<U> =
+  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
+
+// Get the type of capabilities required by Envs
+export type Capabilities<E> = U2I<CapabilitiesOf<E>>
+type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
+
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
 // pure functions.
