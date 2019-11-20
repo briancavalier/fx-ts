@@ -84,14 +84,13 @@ export type Use<E, CP> =
   E extends Env<infer C, infer A>
     ? CP extends C ? never
     : C extends CP ? Env<Omit<C, keyof CP>, A>
-  : E
-  : E
+  : E : E
 
 // Satisfy some or all of a Computation's required capabilities.
 // Unfortunately, I haven't found a clear way to write the type of
 // use in TS notation.  It's type is:
 // use: (Computation<E, A, N>, C) => Computation<Use<E, C>, A, N>
-export const use = co(function* <E, A, N, C> (cg: Computation<E, A, N>, c: C): Generator<Use<E, C>, A, N> {
+export const use = co(function* <E, R, N, C> (cg: Computation<E, R, N>, c: C): Generator<Use<E, C>, R, N> {
     let i = startComputation(cg)
     let ir = i.next()
     while (!ir.done) {

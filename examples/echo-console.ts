@@ -24,16 +24,16 @@ const main = co(function* () {
   }
 })
 
-const readline = createInterface({
-  input: process.stdin
-})
-
 const capabilities = {
   print: (s: string): Result<void> =>
     pure(void process.stdout.write(s)),
 
   read: (): Result<string> =>
     cont(k => {
+      const readline = createInterface({
+        input: process.stdin
+      })
+
       readline.once('line', k)  
       return ck => { 
         readline.removeListener('line', k).close()
