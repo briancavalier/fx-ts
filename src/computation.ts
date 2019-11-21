@@ -35,7 +35,7 @@ export class GeneratorComputation<A extends readonly any[], Y, R, N> implements 
   _type!: Computation<Y, R, N>['_type']
   constructor(public readonly args: A, public readonly f: (...args: A) => Generator<Y, R, N>) {}
   [Symbol.iterator](): Iterator<Y, R, N> {
-      return this.f(...this.args)
+    return this.f(...this.args)
   }
 }
 
