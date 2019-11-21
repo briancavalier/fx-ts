@@ -43,20 +43,8 @@ export class GeneratorComputation<A extends readonly any[], Y, R, N> implements 
 export class SingletonComputation<Y, A> implements Computation<Y, A, A> {
   _type!: Computation<Y, A, A>['_type']
   constructor(public readonly value: Y) {}
-  [Symbol.iterator](): Iterator<Y, A, A> {
-    return new SingletonComputationIterator<Y, A>(this.value)
-  }
-}
-
-export class SingletonComputationIterator<Y, A> implements Iterator<Y, A, A> {
-  private done = false
-  constructor(public readonly value: Y) {}
-
-  next (a: A): IteratorResult<Y, A> {
-    if (this.done) return { done: true, value: a }
-    
-    this.done = true
-    return { done: false, value: this.value }
+  *[Symbol.iterator](): Iterator<Y, A, A> {
+    return yield this.value
   }
 }
 
