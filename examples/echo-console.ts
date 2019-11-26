@@ -1,20 +1,18 @@
-import { Op, op, pure, cont, use, unsafeRunEffects, co, Result } from '../src'
+import { op, co, unsafeRunEffects, Resume, resumeLater, resumeNow, use } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 interface Print {
-  print (s: string): Result<void>
+  print (s: string): Resume<void>
 }
 
-const print = (s: string): Op<Print, void> =>
-  op(c => c.print(s))
+const print = (s: string) => op<Print, void>(c => c.print(s))
 
 interface Read {
-  read (): Result<string>
+  read (): Resume<string>
 }
 
-const read: Op<Read, string> =
-  op(c => c.read())
+const read = op<Read, string>(c => c.read())
 
 const main = co(function* () {
   while(true) {
@@ -25,23 +23,20 @@ const main = co(function* () {
 })
 
 const capabilities = {
-  print: (s: string): Result<void> =>
-    pure(void process.stdout.write(s)),
+  print: (s: string) =>
+    resumeNow<void>(void process.stdout.write(s)),
 
-  read: (): Result<string> =>
-    cont(k => {
+  read: () =>
+    resumeLater<string>(k => {
       const readline = createInterface({
         input: process.stdin
       })
 
       readline.once('line', k)  
-      return ck => { 
+      return () => {
         readline.removeListener('line', k).close()
-        return ck()
-      }  
+      }
     })
 }
 
-const c = use(main(), capabilities)
-
-unsafeRunEffects(c)
+unsafeRunEffects(use(main(), capabilities))

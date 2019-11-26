@@ -1,18 +1,4 @@
-import { Result, pure } from './result'
-
-// An Env requires a set of capabilities C to compute a result A.
-// It would be nice to allow a more polymorphic result instead of
-// locking in the answer types to Cancel, Cancel.  I haven't
-// figured out a nice way that doesn't cause type issues when
-// mixing sync effects and async effects which require cancelability.
-export type Env<C, A> = (c: C) => Result<A>
-
-type U2I<U> =
-  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
-
-// Get the type of capabilities required by Envs
-export type Capabilities<E> = U2I<CapabilitiesOf<E>>
-type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
+import { Env, Capabilities, chainEnv, pureEnv, resumeNow } from './env'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -40,13 +26,21 @@ export class GeneratorComputation<A extends readonly any[], Y, R, N> implements 
 }
 
 // Computation wrapper to yield a single value.
-export class SingletonComputation<Y, A> implements Computation<Y, A, A> {
-  _type!: Computation<Y, A, A>['_type']
+export class SingletonComputation<Y, R> implements Computation<Y, R, R> {
+  _type!: Computation<Y, R, R>['_type']
   constructor(public readonly value: Y) {}
-  *[Symbol.iterator](): Iterator<Y, A, A> {
+  *[Symbol.iterator](): Iterator<Y, R, R> {
     return yield this.value
   }
 }
+
+export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
+  const i = startComputation(g)
+  return stepComputation(i, i.next())
+}
+
+const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir: IteratorResult<Y, R>): Env<Capabilities<Y>, R> =>
+  ir.done ? pureEnv(ir.value) : chainEnv(ir.value, n => stepComputation(i, i.next(n)))
 
 // Get an iterator over a computation's effects.
 // Mostly this exists to avoid sprinkling ugly [Symbol.iterator]()
@@ -58,17 +52,12 @@ export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y,
 export const co = <A extends readonly any[], Y, R, N> (f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => new GeneratorComputation(args, f)
 
-// Alias for a computation that requires capabilities C
-// to produce a result A
-export interface Op<C, A> extends Computation<Env<C, A>, A, A> {}
-
 // Turn a single Env into a computation
-export const op = <C, A> (env: Env<C, A>): Op<C, A> =>
+export const op = <C, A> (env: Env<C, A>): Computation<Env<C, A>, A, A> =>
   new SingletonComputation(env)
 
 // Request a capability by type
-export const get = <C>(): Op<C, C> =>
-  op(pure)
+export const get = <C>() => op<C, C>(resumeNow)
 
 // Satisfy some or all of an Env's required capabilities, at the type level.
 // Importantly, this evaluates to `never` when all E's capabilities
@@ -82,16 +71,6 @@ export type Use<E, CP> =
   : E : E
 
 // Satisfy some or all of a Computation's required capabilities.
-// Unfortunately, I haven't found a clear way to write the type of
-// use in TS notation.  It's type is:
-// use: (Computation<E, A, N>, C) => Computation<Use<E, C>, A, N>
-export const use = co(function* <E, R, N, C> (cg: Computation<E, R, N>, c: C): Generator<Use<E, C>, R, N> {
-    let i = startComputation(cg)
-    let ir = i.next()
-    while (!ir.done) {
-        const x = yield (((c0: any) => (ir.value as any)({ ...c0, ...c })) as Use<E, C>)
-        ir = i.next(x)
-    }
-
-    return ir.value
-})
+export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
+  op((c0: Capabilities<Use<Y, C>>) =>
+    runComputation(cg)({ ...c0 as any, ...c } as Capabilities<Y>)) as unknown as Computation<Use<Y, C>, R, R>

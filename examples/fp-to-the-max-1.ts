@@ -1,4 +1,4 @@
-import { Result, Op, op, co, pure, cont, unsafeRunEffects, use, get } from '../src'
+import { op, co, get, unsafeRunEffects, Resume, resumeNow, resumeLater, Env, Computation, use, Use } from '../src'
 import { createInterface } from 'readline'
 
 // -------------------------------------------------------------------
@@ -9,21 +9,18 @@ import { createInterface } from 'readline'
 // Capabilities the game will need
 
 interface Print {
-  print (s: string): Result<void>
+  print (s: string): Resume<void>
 }
 
-const print = (s: string): Op<Print, void> =>
-  op(c => c.print(s))
+const print = (s: string) => op<Print, void>(c => c.print(s))
 
-const println = (s: string): Op<Print, void> =>
-  print(`${s}\n`)
+const println = (s: string) => print(`${s}\n`)
 
 interface Read {
-  read (): Result<string>
+  read (): Resume<string>
 }
 
-const read: Op<Read, string> =
-  op(c => c.read())
+const read = op<Read, string>(c => c.read())
 
 const ask = co(function* (prompt: string) {
   yield* print(prompt)
@@ -31,11 +28,10 @@ const ask = co(function* (prompt: string) {
 })
 
 interface Random {
-  randomInt (min: number, max: number): Result<number>
+  randomInt (min: number, max: number): Resume<number>
 }
 
-const randomInt = (min: number, max: number): Op<Random, number> =>
-  op(c => c.randomInt(min, max))
+const randomInt = (min: number, max: number) => op<Random, number>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
 // The game
@@ -56,7 +52,7 @@ const play = co(function* (name: string, min: number, max: number) {
   const secret = yield* randomInt(min, max)
   const guess = Number(yield* ask(`Dear ${name}, please guess a number from ${min} to ${max}: `))
 
-  if(isNaN(guess)) {
+  if(!Number.isInteger(guess)) {
     yield* println('You did not enter an integer!')
   } else {
     if(checkAnswer(secret, guess)) yield* println(`You guessed right, ${name}!`)
@@ -87,6 +83,8 @@ const main = co(function* () {
   do {
     yield* play(name, min, max)
   } while(yield* checkContinue(name))
+
+  yield* println(`Thanks for playing, ${name}.`)
 })
 
 // -------------------------------------------------------------------
@@ -97,31 +95,27 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  print: (s: string): Result<void> =>
-    pure(void process.stdout.write(s)),
+  print: (s: string): Resume<void> =>
+    resumeNow(void process.stdout.write(s)),
 
-  read: (): Result<string> =>
-    cont(k => {
+  read: (): Resume<string> =>
+    resumeLater(k => {
       const readline = createInterface({
         input: process.stdin
       })      
       readline.once('line', s => {
         readline.close()
         k(s)
-      })  
-      return ck => { 
+      })
+      return () =>
         readline.removeListener('line', k).close()
-        return ck()
-      }  
     }),
 
-  randomInt: (min: number, max: number): Result<number> =>
-    pure(Math.floor(min + (Math.random() * (max - min))))
+  randomInt: (min: number, max: number): Resume<number> =>
+    resumeNow(Math.floor(min + (Math.random() * (max - min))))
 }
 
-// Satisfy all capabilities to build the game as a runnable computation
-const game = use(main(), capabilities)
+unsafeRunEffects(use(main(), capabilities))
 
-// Run the game
-// No effects will be performed until this line
-unsafeRunEffects(game)
+
+
