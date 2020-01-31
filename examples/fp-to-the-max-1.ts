@@ -1,4 +1,4 @@
-import { op, co, get, unsafeRunEffects, Resume, resumeNow, resumeLater, Env, Computation, use, Use } from '../src'
+import { effect, co, get, unsafeRunEffects, Resume, resumeNow, resumeLater, use } from '../src'
 import { createInterface } from 'readline'
 
 // -------------------------------------------------------------------
@@ -8,30 +8,18 @@ import { createInterface } from 'readline'
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-interface Print {
-  print (s: string): Resume<void>
-}
+const print = (s: string) => effect<'print', void, [string]>(c => c.print(s))
 
-const print = (s: string) => op<Print, void>(c => c.print(s))
+const read = effect<'read', string>(c => c.read())
 
 const println = (s: string) => print(`${s}\n`)
-
-interface Read {
-  read (): Resume<string>
-}
-
-const read = op<Read, string>(c => c.read())
 
 const ask = co(function* (prompt: string) {
   yield* print(prompt)
   return yield* read
 })
 
-interface Random {
-  randomInt (min: number, max: number): Resume<number>
-}
-
-const randomInt = (min: number, max: number) => op<Random, number>(c => c.randomInt(min, max))
+const randomInt = (min: number, max: number) => effect<'randomInt', number, [number, number]>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
 // The game

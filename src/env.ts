@@ -22,26 +22,18 @@ export const pureEnv = <A>(a: A): Env<any, A> =>
 export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>): Env<C1 & C2, B> =>
   c12 => chainResume(e(c12), a => f(a)(c12))
 
-export class ResumeNow<A> {
-  constructor (public readonly value: A) {}
-}
+export type Resume<A> =
+  | { now: true, value: A }
+  | { now: false, run: (k: (a: A) => Cancel) => Cancel }
 
-export const resumeNow = <A>(a: A): Resume<A> =>
-  new ResumeNow(a)
+export const resumeNow = <A>(value: A): Resume<A> =>
+  ({ now: true, value })
 
-export class ResumeLater<A> {
-  constructor (public readonly run: (k: (a: A) => Cancel) => Cancel) {}
-}
-
-export const resumeLater = <A> (f: (k: (a: A) => Cancel) => Cancel): Resume<A> =>
-  new ResumeLater<A>(f)
-
-export type Resume<A> = ResumeNow<A> | ResumeLater<A>
+export const resumeLater = <A> (run: (k: (a: A) => Cancel) => Cancel): Resume<A> =>
+  ({ now: false, run })
 
 export const runResume = <A> (ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
-  ra instanceof ResumeLater ? ra.run(k) : k(ra.value)
+  ra.now ? k(ra.value) : ra.run(k)
 
 export const chainResume = <A, B>(ra: Resume<A>, f: (a: A) => Resume<B>): Resume<B> =>
-  ra instanceof ResumeLater
-    ? new ResumeLater(k => ra.run((a: A) => runResume(f(a), k)))
-    : f(ra.value)
+  ra.now ? f(ra.value) : resumeLater(k => ra.run((a: A) => runResume(f(a), k)))

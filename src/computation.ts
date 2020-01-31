@@ -1,4 +1,4 @@
-import { Env, Capabilities, chainEnv, pureEnv, resumeNow } from './env'
+import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume } from './env'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -13,26 +13,21 @@ export interface Computation<Y, R, N> {
   [Symbol.iterator](): Iterator<Y, R, N>
 }
 
-// Computation wrapper for a Generator that allows the computation
-// to be started more than on\ce by calling the generator function each
-// time its iterator is requested (whereas generators return `this` each
-// time their iterator is requested)
-export class GeneratorComputation<A extends readonly any[], Y, R, N> implements Computation<Y, R, N> {
-  _type!: Computation<Y, R, N>['_type']
-  constructor(public readonly args: A, public readonly f: (...args: A) => Generator<Y, R, N>) {}
-  [Symbol.iterator](): Iterator<Y, R, N> {
-    return this.f(...this.args)
-  }
-}
+// Create a Computation from an Env-yielding generator
+// allows the computation to be started more than on\ce by calling the
+// generator function each time its iterator is requested (whereas
+// generators return `this` each time their iterator is requested)
+export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
+  (...args) => ({
+    _type: 'fx-ts/Computation',
+    [Symbol.iterator]() { return f(...args) }
+  })
 
-// Computation wrapper to yield a single value.
-export class SingletonComputation<Y, R> implements Computation<Y, R, R> {
-  _type!: Computation<Y, R, R>['_type']
-  constructor(public readonly value: Y) {}
-  *[Symbol.iterator](): Iterator<Y, R, R> {
-    return yield this.value
-  }
-}
+// Create a Computation from an Env
+export const fromEnv = <C, A>(env: Env<C, A>): Computation<Env<C, A>, A, A> => ({
+  _type: 'fx-ts/Computation',
+  *[Symbol.iterator]() { return yield env }
+})
 
 export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
   const i = startComputation(g)
@@ -48,16 +43,14 @@ const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir:
 export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y, R, N> =>
   c[Symbol.iterator]()
 
-// Turn an Env-yielding generator into a computation
-export const co = <A extends readonly any[], Y, R, N> (f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
-  (...args) => new GeneratorComputation(args, f)
 
-// Turn a single Env into a computation
-export const op = <C, A> (env: Env<C, A>): Computation<Env<C, A>, A, A> =>
-  new SingletonComputation(env)
+export type Effect<K extends string | symbol, R, A extends readonly any[] = []> = Computation<Env<{ [X in K]: (...args: A) => Resume<R> }, R>, R, R>
+
+export const effect = <K extends string | symbol, R, A extends readonly any[] = []>(env: Env<{ [X in K]: (...args: A) => Resume<R> }, R>): Effect<K, R, A> => 
+  fromEnv(env)
 
 // Request a capability by type
-export const get = <C>() => op<C, C>(resumeNow)
+export const get = <C>() => fromEnv<C, C>(resumeNow)
 
 // Satisfy some or all of an Env's required capabilities, at the type level.
 // Importantly, this evaluates to `never` when all E's capabilities
@@ -72,5 +65,5 @@ export type Use<E, CP> =
 
 // Satisfy some or all of a Computation's required capabilities.
 export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
-  op((c0: Capabilities<Use<Y, C>>) =>
+  fromEnv((c0: Capabilities<Use<Y, C>>) =>
     runComputation(cg)({ ...c0 as any, ...c } as Capabilities<Y>)) as unknown as Computation<Use<Y, C>, R, R>
