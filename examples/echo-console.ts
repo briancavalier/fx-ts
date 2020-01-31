@@ -1,4 +1,4 @@
-import { effect, co, unsafeRunEffects, resumeLater, resumeNow, use } from '../src'
+import { effect, co, unsafeRunEffects, resumeLater, resumeNow, use, Resume } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
@@ -14,15 +14,18 @@ const main = co(function* () {
 })
 
 const capabilities = {
-  print: (s: string) =>
-    resumeNow<void>(void process.stdout.write(s)),
+  print: (s: string): Resume<void> =>
+    resumeNow(void process.stdout.write(s)),
 
-  read: () =>
-    resumeLater<string>(k => {
-      const readline = createInterface({ input: process.stdin }).once('line', k)  
+  read: (): Resume<string> =>
+    resumeLater(k => {
+      const readline = createInterface({ input: process.stdin }).once('line', s => {
+        readline.close()
+        k(s)
+      })  
       return () => readline.removeListener('line', k).close()
     })
 }
-const m = main()
+const m = use(main(), capabilities)
 
-unsafeRunEffects(use(m, capabilities))
+unsafeRunEffects(m)
