@@ -88,15 +88,12 @@ const capabilities = {
 
   read: (): Resume<string> =>
     resumeLater(k => {
-      const readline = createInterface({
-        input: process.stdin
-      })      
-      readline.once('line', s => {
-        readline.close()
-        k(s)
-      })
-      return () =>
-        readline.removeListener('line', k).close()
+      const readline = createInterface({ input: process.stdin })
+        .once('line', s => {
+          readline.close()
+          k(s)
+        })
+      return () => readline.removeListener('line', k).close()
     }),
 
   randomInt: (min: number, max: number): Resume<number> =>
