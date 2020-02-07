@@ -20,13 +20,13 @@ export interface Computation<Y, R, N> {
 export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => ({
     _type: 'fx-ts/Computation',
-    [Symbol.iterator]() { return f(...args) }
+    [Symbol.iterator](): Iterator<Y, R, N> { return f(...args) }
   })
 
 // Create a Computation from an Env
 export const fromEnv = <C, A>(env: Env<C, A>): Computation<Env<C, A>, A, A> => ({
   _type: 'fx-ts/Computation',
-  *[Symbol.iterator]() { return yield env }
+  *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 })
 
 export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
@@ -43,11 +43,17 @@ const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir:
 export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y, R, N> =>
   c[Symbol.iterator]()
 
+type Result<C> = {
+  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<infer R> ? R : never
+}[keyof C]
 
-export type Effect<K extends string | symbol, R, A extends readonly any[] = []> = Computation<Env<{ [X in K]: (...args: A) => Resume<R> }, R>, R, R>
-
-export const effect = <K extends string | symbol, R, A extends readonly any[] = []>(env: Env<{ [X in K]: (...args: A) => Resume<R> }, R>): Effect<K, R, A> => 
-  fromEnv(env)
+export function op<C>(env: Env<C, Result<C>>): Computation<Env<C, Result<C>>, Result<C>, Result<C>>
+export function op<C, R>(env: Env<C, R>): Computation<Env<C, R>, R, R>
+export function op<C, R>(env: Env<C, R>): Computation<Env<C, R>, R, R> {
+  return fromEnv(env)
+}
+// export const op = <C, R = Result<C>>(env: Env<C, R>): Computation<Env<C, R>, R, R> =>
+//   fromEnv(env)
 
 // Request a capability by type
 export const get = <C>() => fromEnv<C, C>(resumeNow)
@@ -59,9 +65,11 @@ export const get = <C>() => fromEnv<C, C>(resumeNow)
 // to a computation that never yields any Envs.
 export type Use<E, CP> =
   E extends Env<infer C, infer A>
-    ? CP extends C ? never
+    ? CP extends C ? Env<void, A>
     : C extends CP ? Env<Omit<C, keyof CP>, A>
   : E : E
+
+export interface Pure<A> extends Env<void, A> {}
 
 // Satisfy some or all of a Computation's required capabilities.
 export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>

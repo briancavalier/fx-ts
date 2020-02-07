@@ -1,5 +1,5 @@
 import { Cancel, runResume, uncancelable } from './env'
-import { Computation, runComputation } from './computation'
+import { Computation, runComputation, Pure } from './computation'
 
-export const unsafeRunEffects = <N> (c: Computation<never, void | never, N>): Cancel =>
+export const unsafeRun = <Y extends Pure<any>, N>(c: Computation<Y, void | never, N>): Cancel =>
   runResume(runComputation(c)({} as never), _ => uncancelable)

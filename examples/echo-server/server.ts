@@ -1,5 +1,5 @@
 import { Queue, queueTake, queuePut, queue } from './queue'
-import { effect, Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRunEffects, get, Cancel, Capabilities, uncancelable, fromEnv, Effect } from '../../src'
+import { Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRun, get, Cancel, Capabilities, uncancelable, fromEnv, op } from '../../src'
 import { IncomingMessage, ServerResponse, createServer, OutgoingHttpHeaders } from 'http'
 import { Readable } from 'stream'
 import { ListenOptions } from 'net'
@@ -9,26 +9,25 @@ const cancelAll = (...cancels: readonly Cancel[]): Cancel =>
     for(const cancel of cancels) cancel()
   }
 
-interface Fork {
-  fork <N>(comp: Computation<never, void, N>): Resume<void>
-}
+type Fork = { fork <N>(comp: Computation<never, void, N>): Resume<void> }
 
 const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>) =>
   fromEnv<Fork & Capabilities<Y>, void>(c => c.fork(use(comp, c) as Computation<never, void, N>))
 
-const listen = (o: ListenOptions) =>
-  effect<'listen', Queue<NodeConnection>, [ListenOptions]>(c => c.listen(o))
+type Listen = { listen(l: ListenOptions): Resume<Queue<NodeConnection>> }
+const listen = (o: ListenOptions) => op<Listen>(c => c.listen(o))
 
-const accept = (s: Queue<NodeConnection>) =>
-  effect<'accept', NodeConnection, [Queue<NodeConnection>]>(c => c.accept(s))
+type Accept = { accept(q: Queue<NodeConnection>): Resume<NodeConnection> }
+const accept = (s: Queue<NodeConnection>) => op<Accept>(c => c.accept(s))
 
-const respond = (con: NodeConnection, response: NodeResponse) =>
-  effect<'respond', void, [NodeConnection, NodeResponse]>(c => c.respond(con, response))
+type Respond = { respond(con: NodeConnection, response: NodeResponse): Resume<void> }
+const respond = (con: NodeConnection, response: NodeResponse) => op<Respond>(c => c.respond(con, response))
 
-type Log = Effect<'log', void, [string]>
-const log = (s: string): Log => effect(c => c.log(s))
+type Log = { log(s: string): Resume<void> }
+const log = (s: string) => op<Log>(c => c.log(s))
 
-const now = effect<'now', Date>(c => c.now())
+type Now = { now(): Resume<number> }
+const now = op<Now>(c => c.now())
 
 type NodeConnection = { request: IncomingMessage, response: ServerResponse }
 type NodeResponse = { status: number, headers?: OutgoingHttpHeaders, body: Readable }
@@ -63,7 +62,7 @@ const capabilities = {
   log: (s: string) => resumeNow(void process.stdout.write(`${s}\n`)),
   
   fork: <N>(comp: Computation<never, void, N>): Resume<void> =>
-    resumeLater(k => cancelAll(unsafeRunEffects(comp), k())),
+    resumeLater(k => cancelAll(unsafeRun(comp), k())),
 
   listen: (options: ListenOptions): Resume<Queue<NodeConnection>> =>
     resumeLater(k => {
@@ -86,4 +85,4 @@ const capabilities = {
     }),
 }
 
-unsafeRunEffects(use(main(), capabilities))
+unsafeRun(use(main(), capabilities))

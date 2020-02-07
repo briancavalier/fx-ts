@@ -1,4 +1,4 @@
-import { effect, co, get, unsafeRunEffects, Resume, resumeNow, resumeLater, use } from '../src'
+import { co, get, unsafeRun, Resume, resumeNow, resumeLater, use, op } from '../src'
 import { createInterface } from 'readline'
 
 // -------------------------------------------------------------------
@@ -8,9 +8,11 @@ import { createInterface } from 'readline'
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-const print = (s: string) => effect<'print', void, [string]>(c => c.print(s))
+type Print = { print(s: string): Resume<void> }
+const print = (s: string) => op<Print>(c => c.print(s))
 
-const read = effect<'read', string>(c => c.read())
+type Read = { read(): Resume<string> }
+const read = op<Read>(c => c.read())
 
 const println = (s: string) => print(`${s}\n`)
 
@@ -19,7 +21,8 @@ const ask = co(function* (prompt: string) {
   return yield* read
 })
 
-const randomInt = (min: number, max: number) => effect<'randomInt', number, [number, number]>(c => c.randomInt(min, max))
+type RandomInt = { randomInt(min: number, max: number): Resume<number> }
+const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
 // The game
@@ -100,7 +103,7 @@ const capabilities = {
     resumeNow(Math.floor(min + (Math.random() * (max - min))))
 }
 
-unsafeRunEffects(use(main(), capabilities))
+unsafeRun(use(main(), capabilities))
 
 
 

@@ -1,9 +1,12 @@
-import { effect, co, unsafeRunEffects, resumeLater, resumeNow, use, Resume } from '../src'
+import { co, unsafeRun, resumeLater, resumeNow, use, Resume, op } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-const print = (s: string) => effect<'print', void, [string]>(c => c.print(s))
-const read = effect<'read', string>(c => c.read())
+type Print = { print(s: string): Resume<void> }
+const print = (s: string) => op<Print>(c => c.print(s))
+
+type Read = { read(): Resume<string> }
+const read = op<Read>(c => c.read())
 
 const main = co(function* () {
   while(true) {
@@ -28,4 +31,4 @@ const capabilities = {
 }
 const m = use(main(), capabilities)
 
-unsafeRunEffects(m)
+unsafeRun(m)
