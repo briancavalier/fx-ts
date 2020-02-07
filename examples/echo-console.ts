@@ -22,11 +22,12 @@ const capabilities = {
 
   read: (): Resume<string> =>
     resumeLater(k => {
-      const readline = createInterface({ input: process.stdin }).once('line', s => {
+      const handler = (s: string): void => {
         readline.close()
         k(s)
-      })  
-      return () => readline.removeListener('line', k).close()
+      }
+      const readline = createInterface({ input: process.stdin }).once('line', handler)  
+      return () => readline.removeListener('line', handler).close()
     })
 }
 const m = use(main(), capabilities)

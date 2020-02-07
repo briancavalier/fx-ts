@@ -1,16 +1,10 @@
 import { Queue, queueTake, queuePut, queue } from './queue'
-import { Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRun, get, Cancel, Capabilities, uncancelable, fromEnv, op } from '../../src'
+import { Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRun, get, Capabilities, uncancelable, fromEnv, op } from '../../src'
 import { IncomingMessage, ServerResponse, createServer, OutgoingHttpHeaders } from 'http'
 import { Readable } from 'stream'
 import { ListenOptions } from 'net'
 
-const cancelAll = (...cancels: readonly Cancel[]): Cancel => 
-  () => {
-    for(const cancel of cancels) cancel()
-  }
-
 type Fork = { fork <N>(comp: Computation<never, void, N>): Resume<void> }
-
 const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>) =>
   fromEnv<Fork & Capabilities<Y>, void>(c => c.fork(use(comp, c) as Computation<never, void, N>))
 
@@ -62,7 +56,10 @@ const capabilities = {
   log: (s: string) => resumeNow(void process.stdout.write(`${s}\n`)),
   
   fork: <N>(comp: Computation<never, void, N>): Resume<void> =>
-    resumeLater(k => cancelAll(unsafeRun(comp), k())),
+    resumeLater(k => {
+      k()
+      return unsafeRun(comp)
+    }),
 
   listen: (options: ListenOptions): Resume<Queue<NodeConnection>> =>
     resumeLater(k => {
@@ -70,8 +67,8 @@ const capabilities = {
       const s = createServer()      
       s.addListener('request', (request, response) => queuePut({ request, response }, q))
       s.listen(options)
-      const cancel = k(q)
-      return cancelAll(cancel, (() => s.close()) as Cancel)
+      k(q)
+      return () => s.close()
     }),
 
   accept: (queue: Queue<NodeConnection>): Resume<NodeConnection> =>
@@ -79,8 +76,7 @@ const capabilities = {
 
   respond: ({ response }: NodeConnection, { status, body }: NodeResponse): Resume<void> =>
     resumeLater(k => {
-      body.pipe(response).writeHead(status)
-      response.on('finish', k)
+      body.pipe(response).writeHead(status).on('finish', k)
       return uncancelable
     }),
 }
