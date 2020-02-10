@@ -13,10 +13,13 @@ export interface Computation<Y, R, N> {
   [Symbol.iterator](): Iterator<Y, R, N>
 }
 
+export type Yield<C> = C extends Computation<infer Y, any, any> ? Y : never
+export type Return<C> = C extends Computation<any, infer R, any> ? R : never
+export type Next<C> = C extends Computation<any, any, infer N> ? N : never
+
 // Create a Computation from an Env-yielding generator
 // allows the computation to be started more than once by calling the
-// generator function each time its iterator is requested (whereas
-// generators return `this` each time their iterator is requested)
+// generator function each time its iterator is requested
 export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => ({
     _type: 'fx-ts/Computation',
