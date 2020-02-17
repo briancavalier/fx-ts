@@ -1,7 +1,3 @@
-export type Cancel = () => void
-
-export const uncancelable = () => {}
-
 // An Env requires a set of capabilities C to compute a result A.
 // It would be nice to allow a more polymorphic result instead of
 // locking in the answer types to Cancel, Cancel.  I haven't
@@ -10,7 +6,7 @@ export const uncancelable = () => {}
 export type Env<C, A> = (c: C) => Resume<A>
 
 // An Env that requires no capabilities
-export interface Pure<A> extends Env<void, A> { }
+export interface Pure<A> extends Env<void, A> {}
 
 // Satisfy some or all of an Env's requirements, at the type level.
 // Importantly, this evaluates to Pure when all of E's capabilities
@@ -36,6 +32,10 @@ export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>):
 export type Resume<A> =
   | { now: true, value: A }
   | { now: false, run: (k: (a: A) => void) => Cancel }
+
+export type Cancel = () => void
+
+export const uncancelable = () => {}
 
 export const resumeNow = <A>(value: A): Resume<A> =>
   ({ now: true, value })

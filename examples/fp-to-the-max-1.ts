@@ -11,10 +11,10 @@ import { createInterface } from 'readline'
 type Print = { print(s: string): Resume<void> }
 const print = (s: string) => op<Print>(c => c.print(s))
 
+const println = (s: string) => print(`${s}\n`)
+
 type Read = { read(): Resume<string> }
 const read = op<Read>(c => c.read())
-
-const println = (s: string) => print(`${s}\n`)
 
 const ask = co(function* (prompt: string) {
   yield* print(prompt)
