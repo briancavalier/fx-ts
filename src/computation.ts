@@ -9,7 +9,7 @@ import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use } from './
 // computations by writing a generator function that yields effects.
 // Pure code simply executes between the yields.
 export interface Computation<Y, R, N> {
-  _type: 'fx-ts/Computation'
+  'fx-ts/Computation': never
   [Symbol.iterator](): Iterator<Y, R, N>
 }
 
@@ -22,15 +22,13 @@ export type Next<C> = C extends Computation<any, any, infer N> ? N : never
 // generator function each time its iterator is requested
 export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args) => ({
-    _type: 'fx-ts/Computation',
     [Symbol.iterator](): Iterator<Y, R, N> { return f(...args) }
-  })
+  }) as Computation<Y, R, N>
 
 // Create a Computation from an Env
 export const fromEnv = <C, A>(env: Env<C, A>): Computation<Env<C, A>, A, A> => ({
-  _type: 'fx-ts/Computation',
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
-})
+}) as Computation<Env<C, A>, A, A>
 
 export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
   const i = startComputation(g)
