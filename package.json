@@ -4,6 +4,10 @@
   "description": "",
   "module": "dist/index.js",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/briancavalier/fx-ts.git"
+  },
   "scripts": {
     "test": "tsc --noEmit",
     "prepublishOnly": "npm run build",
