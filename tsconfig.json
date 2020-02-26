@@ -6,6 +6,7 @@
     "lib": [
       "es2018"
     ],
+    "removeComments": true,
     "strict": true,
     "sourceMap": true,
     "declaration": true,
