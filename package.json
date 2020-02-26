@@ -1,9 +1,9 @@
 {
   "name": "fx-ts",
   "version": "1.0.0",
-  "description": "",
-  "module": "dist/index.js",
+  "description": "Computational environments for TypeScript",
   "main": "dist/index.js",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/briancavalier/fx-ts.git"
