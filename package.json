@@ -13,6 +13,9 @@
     "prepublishOnly": "npm run build",
     "build": "tsc"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [],
   "author": "",
   "license": "MIT",
