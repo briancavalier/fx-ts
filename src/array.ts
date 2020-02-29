@@ -33,13 +33,12 @@ export const zip = <Computations extends readonly Computation<any, any, any>[]>(
 // TODO: Consider requiring the input computations to be Async
 export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>>, AnyResult<Computations>, any> =>
   fromEnv((c: AllCapabilities<Computations>) => resumeLater<AnyResult<Computations>>(k => {
-    const cancelAll = () => cancels.forEach(c => c())
-
     const cancels = cs.map((computation: Computations[number]) =>
       runResume(runComputation(computation)(c), (x: AnyResult<Computations>) => {
         cancelAll()
         k(x)
       }))
 
+    const cancelAll = () => cancels.forEach(c => c())
     return cancelAll
   }))

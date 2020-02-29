@@ -21,7 +21,7 @@ export type Next<C> = C extends Computation<any, any, infer N> ? N : never
 // allows the computation to be started more than once by calling the
 // generator function each time its iterator is requested
 export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
-  (...args) => ({
+  (...args: A): Computation<Y, R, N> => ({
     [Symbol.iterator](): Iterator<Y, R, N> { return f(...args) }
   }) as Computation<Y, R, N>
 
