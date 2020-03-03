@@ -8,7 +8,8 @@ The goal of fx-ts is to help in writing programs that interact with their enviro
 
 ## Requirements
 
-fx-ts is founded on ideas that work best with a type system.  It's intended to be used from TypeScript.
+* TypeScript >= 3.7
+* [Generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*)
 
 ## Install
 
