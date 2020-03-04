@@ -17,6 +17,13 @@ export type Use<E, CP> =
   : C extends CP ? Env<Omit<C, keyof CP>, A>
   : E : E
 
+// Change the capabilities of an Env
+// Useful for changing the capabilities of Env unions
+// Embed<Env<C1, A> | Env<C2, B>, C3> = Env<C3, A> | Env<C3, B>
+export type Embed<E, C> =
+  E extends Env<any, infer A>
+  ? Env<C, A> : never
+
 // Get the type of capabilities required by Envs
 export type Capabilities<E> = U2I<CapabilitiesOf<E>>
 type U2I<U> =
