@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { ListenOptions } from 'net'
 
 type Fork = { fork <Y extends Pure<any>, N>(comp: Computation<Y, void, N>): Resume<void> }
-const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>): Computation<Y | Env<Fork, void>, void, any> =>
+const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>): Computation<Y | Env<Fork, void>, void, N> =>
   fromEnv(c => c.fork(use(comp, c)))
 
 type Listen = { listen(l: ListenOptions): Resume<Queue<NodeConnection>> }
