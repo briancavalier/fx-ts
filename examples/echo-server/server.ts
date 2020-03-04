@@ -59,7 +59,7 @@ const capabilities = {
   
   log: (s: string) => resumeNow(void process.stdout.write(`${s}\n`)),
   
-  fork: <N>(comp: Computation<never, void, N>): Resume<void> =>
+  fork: <Y extends Pure<any>, N>(comp: Computation<Y, void, N>): Resume<void> =>
     resumeLater(k => {
       k()
       return unsafeRun(comp)
