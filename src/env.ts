@@ -48,6 +48,7 @@ export const runResume = <A> (ra: Resume<A>, k: (a: A) => void): Cancel =>
 
 export const chainResume = <A, B>(ra: Resume<A>, f: (a: A) => Resume<B>): Resume<B> =>
   ra.now ? f(ra.value) : resumeLater(k => {
-    let cancel = ra.run((a: A) => (cancel = runResume(f(a), k)))
+    let cancel: Cancel = uncancelable
+    cancel = ra.run((a: A) => (cancel = runResume(f(a), k)))
     return () => cancel()
   })
