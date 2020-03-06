@@ -1,4 +1,4 @@
-import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use } from './env'
+import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use, Embed } from './env'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -57,3 +57,9 @@ export const get = <C>() => fromEnv<C, C>(resumeNow)
 export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
   fromEnv((c0: Capabilities<Use<Y, C>>) =>
     runComputation(cg)({ ...c0 as any, ...c })) as Computation<Use<Y, C>, R, R>
+
+// Adapt a Computation that requires one set of capabilities to
+// an environment that provides a different set.
+export const embed = <Y extends Env<any, N>, R, N, C>(cg: Computation<Y, R, N>, f: (c: C) => Capabilities<Y>): Computation<Embed<Y, C>, R, R> =>
+  fromEnv((c: C) =>
+    runComputation(cg)(f(c))) as Computation<Embed<Y, C>, R, R>
