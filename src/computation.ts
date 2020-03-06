@@ -17,6 +17,10 @@ export type Yield<C> = C extends Computation<infer Y, any, any> ? Y : never
 export type Return<C> = C extends Computation<any, infer R, any> ? R : never
 export type Next<C> = C extends Computation<any, any, infer N> ? N : never
 
+type Result<C> = {
+  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<infer R> ? R : never
+}[keyof C]
+
 // Create a Computation from an Env-yielding generator
 // allows the computation to be started more than once by calling the
 // generator function each time its iterator is requested
@@ -26,7 +30,7 @@ export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generat
   }) as Computation<Y, R, N>
 
 // Create a Computation from an Env
-export const fromEnv = <C, A>(env: Env<C, A>): Computation<Env<C, A>, A, A> => ({
+export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, A> => ({
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Computation<Env<C, A>, A, A>
 
@@ -43,23 +47,16 @@ const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir:
 export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y, R, N> =>
   c[Symbol.iterator]()
 
-type Result<C> = {
-  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<infer R> ? R : never
-}[keyof C]
-
-export const op = <C, R = Result<C>>(env: Env<C, R>): Computation<Env<C, R>, R, R> =>
-  fromEnv(env)
-
 // Request a capability by type
-export const get = <C>() => fromEnv<C, C>(resumeNow)
+export const get = <C>() => op<C, C>(resumeNow)
 
 // Satisfy some or all of a Computation's required capabilities.
 export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
-  fromEnv((c0: Capabilities<Use<Y, C>>) =>
+  op((c0: Capabilities<Use<Y, C>>) =>
     runComputation(cg)({ ...c0 as any, ...c })) as Computation<Use<Y, C>, R, R>
 
 // Adapt a Computation that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <Y extends Env<any, N>, R, N, C>(cg: Computation<Y, R, N>, f: (c: C) => Capabilities<Y>): Computation<Embed<Y, C>, R, R> =>
-  fromEnv((c: C) =>
+  op((c: C) =>
     runComputation(cg)(f(c))) as Computation<Embed<Y, C>, R, R>

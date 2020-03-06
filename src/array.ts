@@ -1,4 +1,4 @@
-import { Computation, Yield, Next, Return, fromEnv, runComputation } from './computation'
+import { Computation, Yield, Next, Return, op, runComputation } from './computation'
 import { Capabilities, resumeLater, Env, runResume } from './env'
 
 // Arrays and tuples of computations
@@ -16,7 +16,7 @@ type Writeable<T> = { -readonly [P in keyof T]: T[P] }
 
 // Turn a list of computations into a computation of a list
 export const zip = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AllResult<Computations>>, AllResult<Computations>, AllNexts<Computations>> =>
-  fromEnv((c: AllCapabilities<Computations>) => resumeLater<AllResult<Computations>>(k => {
+  op((c: AllCapabilities<Computations>) => resumeLater<AllResult<Computations>>(k => {
     let remaining = cs.length
     const results = Array(remaining) as Writeable<AllResult<Computations>>
 
@@ -32,7 +32,7 @@ export const zip = <Computations extends readonly Computation<any, any, any>[]>(
 // Return computation equivalent to the input computation that produces the earliest result
 // TODO: Consider requiring the input computations to be Async
 export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>>, AnyResult<Computations>, any> =>
-  fromEnv((c: AllCapabilities<Computations>) => resumeLater<AnyResult<Computations>>(k => {
+  op((c: AllCapabilities<Computations>) => resumeLater<AnyResult<Computations>>(k => {
     const cancels = cs.map((computation: Computations[number]) =>
       runResume(runComputation(computation)(c), (x: AnyResult<Computations>) => {
         cancelAll()

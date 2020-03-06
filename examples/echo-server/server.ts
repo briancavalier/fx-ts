@@ -1,12 +1,12 @@
 import { Queue, queueTake, queuePut, queue } from './queue'
-import { Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRun, get, uncancelable, fromEnv, op, Pure } from '../../src'
+import { Computation, co, resumeNow, Env, resumeLater, Resume, use, unsafeRun, get, uncancelable, op, Pure } from '../../src'
 import { IncomingMessage, ServerResponse, createServer, OutgoingHttpHeaders } from 'http'
 import { Readable } from 'stream'
 import { ListenOptions } from 'net'
 
 type Fork = { fork <Y extends Pure<any>, N>(comp: Computation<Y, void, N>): Resume<void> }
 const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>): Computation<Y | Env<Fork, void>, void, N> =>
-  fromEnv(c => c.fork(use(comp, c)))
+  op(c => c.fork(use(comp, c)))
 
 type Listen = { listen(l: ListenOptions): Resume<Queue<NodeConnection>> }
 const listen = (o: ListenOptions) => op<Listen>(c => c.listen(o))
