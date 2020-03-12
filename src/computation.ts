@@ -35,9 +35,9 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, 
 }) as Computation<Env<C, A>, A, A>
 
 export const runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> =>
-  chainEnv(pureEnv(g), _runComputation)
+  chainEnv(pureEnv(g), startComputation)
 
-const _runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
+const startComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
   const i = g[Symbol.iterator]()
   return stepComputation(i, i.next())
 }
