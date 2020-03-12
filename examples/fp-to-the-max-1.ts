@@ -1,4 +1,5 @@
 import { co, get, unsafeRun, Resume, resumeNow, resumeLater, use, op } from '../src'
+import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
 
 // -------------------------------------------------------------------
@@ -41,13 +42,19 @@ const checkAnswer = (secret: number, guess: number): boolean =>
 // to guess it.
 const play = co(function* (name: string, min: number, max: number) {
   const secret = yield* randomInt(min, max)
-  const guess = Number(yield* ask(`Dear ${name}, please guess a number from ${min} to ${max}: `))
+  const result =
+    yield* timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `))
 
-  if(!Number.isInteger(guess)) {
-    yield* println('You did not enter an integer!')
+  if(typeof result === 'string') {
+    const guess = Number(result)
+    if (!Number.isInteger(guess)) {
+      yield* println('You did not enter an integer!')
+    } else {
+      if (checkAnswer(secret, guess)) yield* println(`You guessed right, ${name}!`)
+      else yield* println(`You guessed wrong, ${name}! The number was: ${secret}`)
+    }
   } else {
-    if(checkAnswer(secret, guess)) yield* println(`You guessed right, ${name}!`)
-    else yield* println(`You guessed wrong, ${name}! The number was: ${secret}`)
+    yield* println('You took too long!')
   }
 })
 
@@ -68,6 +75,7 @@ const checkContinue = co(function* (name: string) {
 const main = co(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
+  yield* delay(1000)
 
   const { min, max } = yield* get<GameConfig>()
 
@@ -85,6 +93,12 @@ const main = co(function* () {
 const capabilities = {
   min: 1,
   max: 5,
+
+  delay: (ms: number): Resume<void> =>
+    resumeLater(k => {
+      const t = setTimeout(k, ms)
+      return () => clearTimeout(t)
+    }), 
 
   print: (s: string): Resume<void> =>
     resumeNow(void process.stdout.write(s)),
