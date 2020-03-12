@@ -6,14 +6,14 @@
 export type Env<C, A> = (c: C) => Resume<A>
 
 // An Env that requires no capabilities
-export interface Pure<A> extends Env<void, A> {}
+export interface Pure<A> extends Env<unknown, A> {}
 
 // Satisfy some or all of an Env's requirements, at the type level.
 // Importantly, this evaluates to Pure when all of E's capabilities
 // have been satisfied.
 export type Use<E, CP> =
   E extends Env<infer C, infer A>
-  ? CP extends C ? Pure<A>
+  ? CP extends C ? never
   : C extends CP ? Env<Omit<C, keyof CP>, A>
   : E : E
 

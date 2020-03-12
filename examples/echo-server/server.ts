@@ -4,7 +4,7 @@ import { IncomingMessage, ServerResponse, createServer, OutgoingHttpHeaders } fr
 import { Readable } from 'stream'
 import { ListenOptions } from 'net'
 
-type Fork = { fork <Y extends Pure<any>, N>(comp: Computation<Y, void, N>): Resume<void> }
+type Fork = { fork <N>(comp: Computation<never, void, N>): Resume<void> }
 const fork = <Y extends Env<any, any>, N>(comp: Computation<Y, void, N>): Computation<Y | Env<Fork, void>, void, N> =>
   op(c => c.fork(use(comp, c)))
 
@@ -59,7 +59,7 @@ const capabilities = {
   
   log: (s: string) => resumeNow(void process.stdout.write(`${s}\n`)),
   
-  fork: <Y extends Pure<any>, N>(comp: Computation<Y, void, N>): Resume<void> =>
+  fork: <N>(comp: Computation<never, void, N>): Resume<void> =>
     resumeLater(k => {
       k()
       return unsafeRun(comp)
