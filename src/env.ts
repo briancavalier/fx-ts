@@ -18,8 +18,9 @@ export type Use<E, CP> =
   E extends Pure<any>
   ? E
   : E extends Env<infer C, infer A>
-    ? CP extends C ? Pure<A> : Env<Omit<C, keyof CP>, A>
-    : E
+    ? CP extends C ? Pure<A>
+    : C extends CP ? Env<Omit<C, keyof CP>, A>
+  : E : E
 
 // Change the capabilities of an Env
 // Useful for changing the capabilities of Env unions
