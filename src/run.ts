@@ -1,6 +1,6 @@
-import { Cancel, runResume } from './env'
+import { Cancel, runResume, Pure } from './env'
 import { Computation, runComputation } from './computation'
 
-export const unsafeRun = <R, N>(c: Computation<never, R, N>, f: (r: R) => void = () => {}): Cancel =>
+export const unsafeRun = <Y extends Pure<any>, R, N>(c: Computation<Y, R, N>, f: (r: R) => void = () => {}): Cancel =>
   runResume(runComputation(c)({} as never), f)
   

@@ -34,7 +34,7 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, 
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Computation<Env<C, A>, A, A>
 
-export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> =>
+export const runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> =>
   chainEnv(pureEnv(g), _runComputation)
 
 const _runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
