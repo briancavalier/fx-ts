@@ -34,18 +34,16 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, 
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Computation<Env<C, A>, A, A>
 
-export const runComputation = <Y extends Env<any, N>, R, N> (g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
-  const i = startComputation(g)
+export const runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> =>
+  chainEnv(pureEnv(g), startComputation)
+
+const startComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
+  const i = g[Symbol.iterator]()
   return stepComputation(i, i.next())
 }
 
 const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir: IteratorResult<Y, R>): Env<Capabilities<Y>, R> =>
   ir.done ? pureEnv(ir.value) as Env<Capabilities<Y>, R> : chainEnv(ir.value, n => stepComputation(i, i.next(n)))
-
-// Get an iterator over a computation's effects.
-// Mostly this exists to avoid sprinkling ugly [Symbol.iterator]() everywhere
-export const startComputation = <Y, R, N> (c: Computation<Y, R, N>): Iterator<Y, R, N> =>
-  c[Symbol.iterator]()
 
 // Request a capability by type
 export const get = <C>() => op<C, C>(resumeNow)

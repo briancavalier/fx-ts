@@ -5,17 +5,21 @@
 // mixing sync effects and async effects which require cancelability.
 export type Env<C, A> = (c: C) => Resume<A>
 
-// An Env that requires no capabilities
-export interface Pure<A> extends Env<void, A> {}
+// An Env that requires no capabilities, and thus can be run *forall*
+// environments.  Thus, Pure is fully parametric in its capabilities.
+export interface Pure<A> {
+  <C>(c: C): Resume<A>
+}
 
 // Satisfy some or all of an Env's requirements, at the type level.
 // Importantly, this evaluates to Pure when all of E's capabilities
 // have been satisfied.
 export type Use<E, CP> =
-  E extends Env<infer C, infer A>
-  ? CP extends C ? Pure<A>
-  : C extends CP ? Env<Omit<C, keyof CP>, A>
-  : E : E
+  E extends Pure<any>
+  ? E
+  : E extends Env<infer C, infer A>
+    ? CP extends C ? Pure<A> : Env<Omit<C, keyof CP>, A>
+    : E
 
 // Change the capabilities of an Env
 // Useful for changing the capabilities of Env unions
@@ -28,10 +32,10 @@ export type Embed<E, C> =
 export type Capabilities<E> = U2I<CapabilitiesOf<E>>
 type U2I<U> =
   (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
-type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
+type CapabilitiesOf<E> = E extends Pure<any> ? never : E extends Env<infer C, any> ? C : never
 
 export const pureEnv = <A>(a: A): Pure<A> =>
-  _ => resumeNow(a)
+  <C>(_: C) => resumeNow(a)
 
 export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>): Env<C1 & C2, B> =>
   c12 => chainResume(e(c12), a => f(a)(c12))
