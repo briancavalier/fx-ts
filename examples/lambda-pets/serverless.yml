@@ -23,7 +23,7 @@ provider:
 
 functions:
   hello:
-    handler: src/handler.getAdoptablePetsNearby
+    handler: handler.handler
     environment:
       IPSTACK_KEY: ${env:IPSTACK_KEY}
       LOCATION_TIMEOUT: ${env:LOCATION_TIMEOUT}

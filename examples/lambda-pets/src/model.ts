@@ -5,7 +5,7 @@ export type GeoLocation = {
 }
 
 export type Location = GeoLocation & {
-  city: string
+  city?: string
 }
 
 export type Pets = {
