@@ -1,0 +1,37 @@
+service:
+  name: lambda
+# app and org for use with dashboard.serverless.com
+app: fx-ts-test
+org: briancavalier
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+  hello:
+    handler: src/handler.getAdoptablePetsNearby
+    environment:
+      IPSTACK_KEY: ${env:IPSTACK_KEY}
+      LOCATION_TIMEOUT: ${env:LOCATION_TIMEOUT}
+      PETFINDER_ID: ${env:PETFINDER_ID}
+      PETFINDER_SECRET: ${env:PETFINDER_SECRET}
+      PETS_TIMEOUT: ${env:PETS_TIMEOUT}
+      DEFAULT_RADIUS_MILES: ${env:DEFAULT_RADIUS_MILES}
+    events:
+      - http:
+          method: get
+          path: pets
