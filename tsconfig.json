@@ -10,8 +10,8 @@
     "strict": true,
     "sourceMap": true,
     "declaration": true,
-    "declarationDir": "dist",
-    "outDir": "dist",
+    "declarationDir": ".",
+    "outDir": ".",
     "typeRoots": [
       "node_modules/@types"
     ]
@@ -21,6 +21,6 @@
     "examples/**/*.ts"
   ],
   "include": [
-    "src",
+    "src"
   ]
 }
