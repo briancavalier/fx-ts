@@ -9,12 +9,12 @@ import { createInterface } from 'readline'
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-type Print = { print(s: string): Resume<void> }
+type Print = { print(s: string): Resume<never, void> }
 const print = (s: string) => op<Print>(c => c.print(s))
 
 const println = (s: string) => print(`${s}\n`)
 
-type Read = { read(): Resume<string> }
+type Read = { read(): Resume<never, string> }
 const read = op<Read>(c => c.read())
 
 const ask = co(function* (prompt: string) {
@@ -22,7 +22,7 @@ const ask = co(function* (prompt: string) {
   return yield* read
 })
 
-type RandomInt = { randomInt(min: number, max: number): Resume<number> }
+type RandomInt = { randomInt(min: number, max: number): Resume<never, number> }
 const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
@@ -63,7 +63,7 @@ const play = co(function* (name: string, min: number, max: number) {
 const checkContinue = co(function* (name: string) {
   while(true) {
     const answer = yield* ask(`Do you want to continue, ${name}? (y or n) `)
-  
+
     switch (answer.toLowerCase()) {
       case 'y': return true
       case 'n': return false
@@ -94,16 +94,16 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  delay: (ms: number): Resume<void> =>
+  delay: (ms: number): Resume<never, void> =>
     resumeLater(k => {
       const t = setTimeout(k, ms)
       return () => clearTimeout(t)
-    }), 
+    }),
 
-  print: (s: string): Resume<void> =>
+  print: (s: string): Resume<never, void> =>
     resumeNow(void process.stdout.write(s)),
 
-  read: (): Resume<string> =>
+  read: (): Resume<never, string> =>
     resumeLater(k => {
       const readline = createInterface({ input: process.stdin })
         .once('line', s => {
@@ -113,7 +113,7 @@ const capabilities = {
       return () => readline.removeListener('line', k).close()
     }),
 
-  randomInt: (min: number, max: number): Resume<number> =>
+  randomInt: (min: number, max: number): Resume<never, number> =>
     resumeNow(Math.floor(min + (Math.random() * (max - min))))
 }
 
