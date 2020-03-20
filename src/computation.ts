@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use, Embed, resumeLater, runResume, chainResume } from './env'
+=======
+import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use, Embed, resume, uncancelable, runResume, chainResume } from './env'
+>>>>>>> WIP: Refactor runComputation to deal with Resume directly, instead of chainEnv
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
