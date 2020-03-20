@@ -7,18 +7,18 @@ export type Env<C, R, A> = (c: C) => Resume<R, A>
 
 // An Env that requires no capabilities, and thus can be run *forall*
 // environments.  Thus, Pure is fully parametric in its capabilities.
-export interface Pure<R, A> {
-  <C>(c: C): Resume<R, A>
+export interface Pure<A> {
+  <C, R>(c: C): Resume<R, A>
 }
 
 // Satisfy some or all of an Env's requirements, at the type level.
 // Importantly, this evaluates to Pure when all of E's capabilities
 // have been satisfied.
 export type Use<E, CP> =
-  E extends Pure<any, any>
+  E extends Pure<any>
   ? E
   : E extends Env<infer C, infer R, infer A>
-    ? CP extends C ? Pure<R, A>
+    ? CP extends C ? Pure<A>
     : C extends CP ? Env<Omit<C, keyof CP>, R, A>
   : E : E
 
@@ -33,10 +33,10 @@ export type Embed<E, C> =
 export type Capabilities<E> = U2I<CapabilitiesOf<E>>
 type U2I<U> =
   (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
-type CapabilitiesOf<E> = E extends Pure<any, any> ? never : E extends Env<infer C, any, any> ? C : never
+type CapabilitiesOf<E> = E extends Pure<any> ? never : E extends Env<infer C, any, any> ? C : never
 
 // export const pureEnv = <A>(a: A): Pure<A> =>
-//   <C>(_: C) => resumeNow(a)
+//   <C, R>(_: C) => resumeNow<R, A>(a)
 
 // export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>): Env<C1 & C2, B> =>
 //   c12 => chainResume(e(c12), a => f(a)(c12))
