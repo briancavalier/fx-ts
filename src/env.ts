@@ -43,7 +43,7 @@ export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>):
 
 export type Resume<A> =
   | { now: true, value: A }
-  | { now: false, run: (k: (a: A) => void) => Cancel }
+  | { now: false, run: (k: (a: A) => Cancel) => Cancel }
 
 export type Cancel = () => void
 
@@ -52,15 +52,18 @@ export const uncancelable = () => {}
 export const resumeNow = <A>(value: A): Resume<A> =>
   ({ now: true, value })
 
-export const resumeLater = <A> (run: (k: (a: A) => void) => Cancel): Resume<A> =>
+export const resume = <A>(run: (k: (a: A) => Cancel) => Cancel): Resume<A> =>
   ({ now: false, run })
 
-export const runResume = <A> (ra: Resume<A>, k: (a: A) => void): Cancel =>
-  ra.now ? (k(ra.value), uncancelable) : ra.run(k)
-
-export const chainResume = <A, B>(ra: Resume<A>, f: (a: A) => Resume<B>): Resume<B> =>
-  ra.now ? f(ra.value) : resumeLater(k => {
-    let cancel: Cancel = uncancelable
-    cancel = ra.run((a: A) => (cancel = runResume(f(a), k)))
+export const resumeLater = <A> (run: (k: (a: A) => void) => Cancel): Resume<A> =>
+  resume(k => {
+    let cancel = uncancelable
+    cancel = run(a => (cancel = k(a)))
     return () => cancel()
   })
+
+export const runResume = <A> (ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
+  ra.now ? k(ra.value) : ra.run(k)
+
+export const chainResume = <A, B>(ra: Resume<A>, f: (a: A) => Resume<B>): Resume<B> =>
+  ra.now ? f(ra.value) : resume(k => ra.run(a => runResume(f(a), k)))
