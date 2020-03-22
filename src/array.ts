@@ -36,7 +36,7 @@ export const race = <Computations extends readonly Computation<any, any, any>[]>
     const cancels = cs.map((computation: Computations[number]) =>
       runResume(runComputation(computation)(c) as any, (s: Step<never, AnyResult<Computations>>) => {
         cancelAll()
-        return k({ done: false, value: s.value })
+        return k(s)
       }))
 
     const cancelAll = () => cancels.forEach(c => c())

@@ -1,4 +1,4 @@
-import { Env, Capabilities, resumeNow, Resume, Use, Embed, resume, runResume, done } from './env'
+import { Env, Capabilities, resumeNow, Resume, Use, Embed, resume, runResume, done, Step } from './env'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -10,7 +10,7 @@ import { Env, Capabilities, resumeNow, Resume, Use, Embed, resume, runResume, do
 // Pure code simply executes between the yields.
 export interface Computation<Y, R, N> {
   'fx-ts/Computation': never
-  [Symbol.iterator](): Iterator<Y, R, N>
+  [Symbol.iterator](): Generator<Y, R, N>
 }
 
 export type Yield<C> = C extends Computation<infer Y, any, any> ? Y : never
@@ -26,27 +26,28 @@ type Result<C> = {
 // generator function each time its iterator is requested
 export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generator<Y, R, never>): ((...args: A) => Computation<Y, R, N>) =>
   (...args: A): Computation<Y, R, N> => ({
-    [Symbol.iterator](): Iterator<Y, R, N> { return f(...args) }
+    [Symbol.iterator](): Generator<Y, R, N> { return f(...args) }
   }) as Computation<Y, R, N>
 
 // Create a Computation from an Env
 export const op = <C, A = Result<C>, R = never>(env: Env<C, R, A>): Computation<Env<C, R, A>, A, A> => ({
-  *[Symbol.iterator](): Iterator<Env<C, R, A>, A, A> { return yield env }
+  *[Symbol.iterator](): Generator<Env<C, R, A>, A, A> { return yield env }
 }) as Computation<Env<C, R, A>, A, A>
 
-export const runComputation = <Y extends Env<any, R, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R, never> =>
+export const runComputation = <Y extends Env<any, R, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R, R> =>
   c => {
     const i = g[Symbol.iterator]()
     return stepComputation(i, i.next(), c)
   }
 
-const stepComputation = <Y extends Env<any, R, N>, R, N>(i: Iterator<Y, R, N>, ir: IteratorResult<Y, R>, c: Capabilities<Y>): Resume<R, never> => {
+const stepComputation = <Y extends Env<any, R, N>, R, N>(i: Generator<Y, R, N>, ir: IteratorResult<Y, R>, c: Capabilities<Y>): Resume<R, R> => {
   while (true) {
-    if (ir.done) return done(ir.value)
+    if (ir.done) return resumeNow(ir.value)
 
     const r = ir.value(c)
-    if (!r.now) return resume(k => runResume(r, s =>
-      s.done ? k(s) : runResume(stepComputation(i, i.next(s.value), c), k)))
+    if (!r.now) return resume(k => r.run(s => s.done
+      ? k(i.return(s.value) as Step<R, R>)
+      : runResume(stepComputation(i, i.next(s.value), c), k)))
 
     if (r.value.done) return r as Resume<R, never>
 
