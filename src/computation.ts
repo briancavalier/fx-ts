@@ -17,12 +17,8 @@ export type Yield<C> = C extends Computation<infer Y, any, any> ? Y : never
 export type Return<C> = C extends Computation<any, infer R, any> ? R : never
 export type Next<C> = C extends Computation<any, any, infer N> ? N : never
 
-type Answer<C> = {
-  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<any, infer A> ? A : never
-}[keyof C]
-
 type Result<C> = {
-  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<infer R, any> ? R : never
+  [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<any, infer A> ? A : never
 }[keyof C]
 
 // Create a Computation from an Env-yielding generator
@@ -34,7 +30,7 @@ export const co = <A extends readonly any[], Y, R, N>(f: (...args: A) => Generat
   }) as Computation<Y, R, N>
 
 // Create a Computation from an Env
-export const op = <C, A = Answer<C>, R = never>(env: Env<C, R, A>): Computation<Env<C, R, A>, A, A> => ({
+export const op = <C, A = Result<C>, R = never>(env: Env<C, R, A>): Computation<Env<C, R, A>, A, A> => ({
   *[Symbol.iterator](): Iterator<Env<C, R, A>, A, A> { return yield env }
 }) as Computation<Env<C, R, A>, A, A>
 
