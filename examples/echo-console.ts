@@ -26,7 +26,7 @@ const capabilities = {
         readline.close()
         k(s)
       }
-      const readline = createInterface({ input: process.stdin }).once('line', handler)  
+      const readline = createInterface({ input: process.stdin }).once('line', handler)
       return () => readline.removeListener('line', handler).close()
     })
 }
