@@ -1,4 +1,4 @@
-import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use, Embed } from './env'
+import { Env, Capabilities, chainEnv, pureEnv, resumeNow, Resume, Use, Embed, resumeLater, runResume, chainResume } from './env'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -35,15 +35,21 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, 
 }) as Computation<Env<C, A>, A, A>
 
 export const runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> =>
-  chainEnv(pureEnv(g), startComputation)
+  c => {
+    const i = g[Symbol.iterator]()
+    return stepComputation(i, i.next(), c)
+  }
 
-const startComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R> => {
-  const i = g[Symbol.iterator]()
-  return stepComputation(i, i.next())
+const stepComputation = <Y extends Env<any, N>, R, N>(i: Iterator<Y, R, N>, ir: IteratorResult<Y, R>, c: Capabilities<Y>): Resume<R> => {
+  while (true) {
+    if (ir.done) return resumeNow(ir.value)
+
+    const r = ir.value(c)
+    if (!r.now) return chainResume(r, n => stepComputation(i, i.next(n), c))
+
+    ir = i.next(r.value)
+  }
 }
-
-const stepComputation = <Y extends Env<any, N>, R, N> (i: Iterator<Y, R, N>, ir: IteratorResult<Y, R>): Env<Capabilities<Y>, R> =>
-  ir.done ? pureEnv(ir.value) as Env<Capabilities<Y>, R> : chainEnv(ir.value, n => stepComputation(i, i.next(n)))
 
 // Request a capability by type
 export const get = <C>() => op<C, C>(resumeNow)
