@@ -1,9 +1,9 @@
-import { PetfinderAuth, getPets } from "./petfinder"
-import { co, get, Resume, op } from "../../../src"
-import { APIGatewayProxyEvent } from "aws-lambda"
-import { timeout } from "../../../src/timer"
-import { getLocation } from "./ipstack"
-import { renderError, renderPets } from "./render"
+import { PetfinderAuth, getPets } from './petfinder'
+import { co, get, Resume, op } from '../../../src'
+import { APIGatewayProxyEvent } from 'aws-lambda'
+import { timeout } from '../../../src/timer'
+import { getLocation } from './ipstack'
+import { renderError, renderPets } from './render'
 
 export type Log = { log(s: string): Resume<void> }
 export const log = (s: string) => op<Log>(c => c.log(s))
@@ -20,9 +20,7 @@ export const getAdoptablePetsNear = co(function* (event: APIGatewayProxyEvent) {
   const { radiusMiles, locationTimeout, petsTimeout } = yield* get<Config>()
   const host = getHost(event)
 
-  console.log(Date.now())
   const location = (yield* timeout(locationTimeout, getLocation(host))) || new Error(`Timeout trying to get location for ${host}`)
-  console.log(Date.now(), locationTimeout)
 
   if (location instanceof Error) return { statusCode: 500, body: renderError(location) }
 
@@ -42,4 +40,4 @@ export const getAdoptablePetsNear = co(function* (event: APIGatewayProxyEvent) {
 })
 
 const getHost = (event: APIGatewayProxyEvent): string =>
-  event.multiValueHeaders?.['X-Forwarded-For']?.[0]?.split(/,\s*/)[0] ?? event.headers['Host'] ?? ''
+  event.requestContext.identity.sourceIp

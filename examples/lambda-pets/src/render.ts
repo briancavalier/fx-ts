@@ -1,4 +1,4 @@
-import { Location, Pets } from "./model"
+import { Location, Pets } from './model'
 
 export const renderError = (e: Error): string => wrapHtml(`
   <h1>Darn! We couldn't find adoptable pets for you<h1>

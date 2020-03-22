@@ -1,4 +1,4 @@
-import { resumeLater, Resume, op, co } from "../../../src"
+import { resumeLater, Resume, op, co } from '../../../src'
 import { request as httpsRequest } from 'https'
 import { IncomingMessage, RequestOptions, request } from 'http'
 import { parse as parseUrl } from 'url'
@@ -22,13 +22,12 @@ export const postJson = co(function*<A, R>(url: string, a: A, headers: { [name: 
 export const httpImpl = {
   http: <A>(r: Request): Resume<A | Error> =>
     resumeLater(k => {
-      console.log(r.method, r.url)
       const ro = { method: r.method, ...parseUrl(r.url), headers: r.headers }
       const req = ro.protocol === 'https:' ? httpsRequest(ro) : request(ro)
       req.on('response', m => readResponse<A>(r, m).then(k, k)).on('error', k)
 
       if(r.method === 'POST') req.write(r.body)
-      
+
       req.end()
       return () => req.abort()
     }),
