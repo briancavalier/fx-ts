@@ -1,4 +1,5 @@
-import { Env, Capabilities, resumeNow, Resume, Use, Embed, resume, runResume, done, Step } from './env'
+import { Env, Capabilities, resumeNow, Resume, Use, Embed, resume, runResume, done, Step, Cancel } from './env'
+import { readSync } from 'fs'
 
 // A Computation is a sequence of effects, each of which requires a set
 // of capabilities. Between those effects, there can be any number of
@@ -34,24 +35,23 @@ export const op = <C, A = Result<C>, R = never>(env: Env<C, R, A>): Computation<
   *[Symbol.iterator](): Generator<Env<C, R, A>, A, A> { return yield env }
 }) as Computation<Env<C, R, A>, A, A>
 
-export const runComputation = <Y extends Env<any, R, N>, R, N>(g: Computation<Y, R, N>): Env<Capabilities<Y>, R, R> =>
-  c => {
+export const runComputation = <Y extends Env<any, R, N>, R, N>(g: Computation<Y, R, N>, c: Capabilities<Y>): Resume<R, R> =>
+  resume(k => {
     const i = g[Symbol.iterator]()
-    return stepComputation(i, i.next(), c)
-  }
+    return stepComputation(i, i.next(), c, k)
+  })
 
-const stepComputation = <Y extends Env<any, R, N>, R, N>(i: Generator<Y, R, N>, ir: IteratorResult<Y, R>, c: Capabilities<Y>): Resume<R, R> => {
+const stepComputation = <Y extends Env<any, R, N>, R, N>(i: Generator<Y, R, N>, ir: IteratorResult<Y, R>, c: Capabilities<Y>, k: (s: Step<R, R>) => Cancel): Cancel => {
   while (true) {
-    if (ir.done) return resumeNow(ir.value)
+    if (ir.done) return k({ done: false, value: ir.value })
 
     const r = ir.value(c)
-    if (!r.now) return resume(k => r.run(s => s.done
+    if (!r.now) return r.run(s => s.done
       ? k(i.return(s.value) as Step<R, R>)
-      : runResume(stepComputation(i, i.next(s.value), c), k)))
+      : stepComputation(i, i.next(s.value), c, k))
 
-    if (r.value.done) return r as Resume<R, never>
-
-    ir = i.next(r.value.value)
+    if (r.value.done) return k(r.value)
+    else ir = i.next(r.value.value)
   }
 }
 
@@ -59,12 +59,10 @@ const stepComputation = <Y extends Env<any, R, N>, R, N>(i: Generator<Y, R, N>, 
 export const get = <C>() => op<C, C>(resumeNow)
 
 // Satisfy some or all of a Computation's required capabilities.
-export const use = <Y extends Env<any, R, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
-  op((c0: Capabilities<Use<Y, C>>) =>
-    runComputation(cg)({ ...c0 as any, ...c })) as Computation<Use<Y, C>, R, R>
+export const use = <Y extends Env<any, any, any>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
+  op(c0 => runComputation(cg, { ...c0 as any, ...c })) as Computation<Use<Y, C>, R, any>
 
 // Adapt a Computation that requires one set of capabilities to
 // an environment that provides a different set.
-export const embed = <Y extends Env<any, R, N>, R, N, C>(cg: Computation<Y, R, N>, f: (c: C) => Capabilities<Y>): Computation<Embed<Y, C>, R, R> =>
-  op((c: C) =>
-    runComputation(cg)(f(c))) as Computation<Embed<Y, C>, R, R>
+export const embed = <Y extends Env<any, any, any>, R, N, C>(cg: Computation<Y, R, N>, f: (c: C) => Capabilities<Y>): Computation<Embed<Y, C>, R, R> =>
+  op(c => runComputation(cg, f(c))) as Computation<Embed<Y, C>, R, any>

@@ -1,6 +1,7 @@
 import { co, get, unsafeRun, Resume, resumeNow, resumeLater, use, op } from '../src'
 import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
+import { attempt } from '../src/fail'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -30,6 +31,7 @@ const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(m
 
 // Min/max range for the number guessing game
 type GameConfig = {
+  timeLimit: number,
   min: number,
   max: number
 }
@@ -40,14 +42,15 @@ const checkAnswer = (secret: number, guess: number): boolean =>
 
 // Play one round of the game.  Generate a number and ask the user
 // to guess it.
-const play = co(function* (name: string, min: number, max: number) {
+const play = co(function* (name: string) {
+  const { min, max, timeLimit } = yield* get<GameConfig>()
   const secret = yield* randomInt(min, max)
   const result =
-    yield* timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `))
+    yield* attempt(timeout(timeLimit * 1000, ask(`Guess a number from ${min} to ${max} (you have ${timeLimit} seconds!): `)))
 
   if(typeof result === 'string') {
     const guess = Number(result)
-    if (!Number.isInteger(guess)) {
+    if (!guess || !Number.isInteger(guess)) {
       yield* println('You did not enter an integer!')
     } else {
       if (checkAnswer(secret, guess)) yield* println(`You guessed right, ${name}!`)
@@ -75,12 +78,10 @@ const checkContinue = co(function* (name: string) {
 const main = co(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
-  yield* delay(1000)
-
-  const { min, max } = yield* get<GameConfig>()
+  // yield* delay(1000)
 
   do {
-    yield* play(name, min, max)
+    yield* play(name)
   } while(yield* checkContinue(name))
 
   yield* println(`Thanks for playing, ${name}.`)
@@ -93,6 +94,7 @@ const main = co(function* () {
 const capabilities = {
   min: 1,
   max: 5,
+  timeLimit: 5,
 
   delay: (ms: number): Resume<never, void> =>
     resumeLater(k => {
@@ -118,6 +120,3 @@ const capabilities = {
 }
 
 unsafeRun(use(main(), capabilities))
-
-
-

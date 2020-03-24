@@ -15,26 +15,31 @@ export type AnyResult<C extends readonly Computation<any, any, any>[]> = Return<
 type Writeable<T> = { -readonly [P in keyof T]: T[P] }
 
 // Turn a list of computations into a computation of a list
-export const zip = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, never, AllResult<Computations>>, AllResult<Computations>, AllNexts<Computations>> =>
-  op((c: AllCapabilities<Computations>) => resume<never, AllResult<Computations>>(k => {
+export const zip = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>, AllResult<Computations>>, AllResult<Computations>, AllNexts<Computations>> =>
+  op((c: AllCapabilities<Computations>) => resume<AnyResult<Computations>, AllResult<Computations>>(k => {
     let remaining = cs.length
     const results = Array(remaining) as Writeable<AllResult<Computations>>
 
     const cancels = cs.map((computation: Computations[typeof i], i) =>
-      runResume(runComputation(computation)(c) as any, (s: Step<never, AnyResult<Computations>>) => {
+      runResume(runComputation(computation, c), (s: Step<AnyResult<Computations>, AnyResult<Computations>>) => {
+        if (s.done) {
+          cancelAll()
+          return k(s)
+        }
         results[i] = s.value
         return --remaining === 0 ? k({ done: false, value: results }) : uncancelable
       }))
 
-    return () => cancels.forEach(c => c())
+    const cancelAll = () => cancels.forEach(c => c())
+    return cancelAll
   }))
 
 // Return computation equivalent to the input computation that produces the earliest result
 // TODO: Consider requiring the input computations to be Async
-export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, never, AnyResult<Computations>>, AnyResult<Computations>, any> =>
-  op((c: AllCapabilities<Computations>) => resume<never, AnyResult<Computations>>(k => {
+export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>, AnyResult<Computations>>, AnyResult<Computations>, any> =>
+  op((c: AllCapabilities<Computations>) => resume<AnyResult<Computations>, AnyResult<Computations>>(k => {
     const cancels = cs.map((computation: Computations[number]) =>
-      runResume(runComputation(computation)(c) as any, (s: Step<never, AnyResult<Computations>>) => {
+      runResume(runComputation(computation, c), (s: Step<AnyResult<Computations>, AnyResult<Computations>>) => {
         cancelAll()
         return k(s)
       }))
