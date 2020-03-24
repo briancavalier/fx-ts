@@ -78,7 +78,7 @@ const checkContinue = co(function* (name: string) {
 const main = co(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
-  // yield* delay(1000)
+  yield* delay(1000)
 
   do {
     yield* play(name)
