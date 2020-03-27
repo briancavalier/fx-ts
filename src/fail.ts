@@ -1,31 +1,29 @@
-import { op, Computation, use } from './computation'
-import { Resume, Env, Capabilities, resume } from './env'
-import { unsafeRun } from './run'
+import { op, Computation, runComputation, pure } from './computation'
+import { Resume, Env, Capabilities, resume, runResume, Use } from './env'
 
-export type Remove<E extends Computation<any, any, any>, C, M extends string> =
-  E extends Computation<infer Y, infer R, infer N> ? AssertExtends<Capabilities<Y>, C, R, N, M> : never
+export type Raise<E> = { raise(e: E): Resume<unknown, unknown> }
+export const raise = <E>(e: E) => op<Raise<E>>(c => c.raise(e))
 
-type AssertExtends<Sub, Sup, R, N, M> = Sub extends Sup
-  ? Computation<Env<Omit<Sub, keyof Sup>, R, N>, R, N>
-  : { capabilities: Sub, required: Sup, error: M }
+export type Fail = Raise<void>
+export const fail = op<Fail>(c => c.raise())
 
-export type Raise<T extends string | symbol, E> = Record<T, (e: E) => Resume<never, never>>
-export const raise = <T extends string | symbol, E>(t: T, e: E) => op<Raise<T, E>, void>(c => c[t](e))
+export type Errors<Y> =
+  Y extends Env<infer C, any, any>
+    ? C extends Raise<infer E> ? E : never
+    : never
 
-const failSymbol = Symbol('Fail')
+export const attempt = <Y extends Env<any, any, any>, R, N>(co: Computation<Y, R, N>) =>
+  recover(pure, co)
 
-export interface Fail extends Raise<typeof failSymbol, void> { }
-export const fail = op<Fail, void>(c => c[failSymbol]())
-
-type AttemptError = 'attempt() may only be applied to Computations with the Fail effect'
-export const attempt = <Y extends Env<any, any, any>, R, N>(co: Computation<Y, R, N>): Remove<Computation<Y, R | undefined, N>, Fail, AttemptError> =>
-  op(c => resume(k => {
-    const cancel = unsafeRun(use(co, {
+export const recover = <Y extends Env<any, any, any>, R, N, Y2 extends Env<any, any, any>, R2, N2>(f: (e: Errors<Y>) => Computation<Y2, R2, N2>, co: Computation<Y, R, N>) =>
+  op((c: Capabilities<Y | Y2>): Resume<R | R2, R | R2> => resume(k => {
+    const capabilities = {
       ...c as any,
-      [failSymbol]() {
+      raise(e: Errors<Y>) {
         cancel()
-        return resume(_ => k({ done: false, value: undefined }))
+        return resume(_ => runResume(runComputation(f(e), c), k))
       }
-    }), k)
+    }
+    const cancel = runResume(runComputation(co, capabilities), k)
     return cancel
-  })) as Remove<Computation<Y, R | undefined, N>, Fail, AttemptError>
+  })) as Computation<Use<Y, Raise<Errors<Y>>>, R | R2, N | N2>

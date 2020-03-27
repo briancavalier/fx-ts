@@ -10,7 +10,7 @@ export const timeout = co(function* <Y, R, N>(ms: number, c: Computation<Y, R, N
   return yield* race(c, delayFail(ms))
 })
 
-const delayFail = co(function* (ms: number): Generator<Env<Delay, never, void> | Env<Fail, never, void>, never, void> {
+const delayFail = co(function* (ms: number): Generator<Env<Delay, never, void> | Env<Fail, unknown, unknown>, never, void> {
   yield* delay(ms)
   return (yield* fail) as never
 })
