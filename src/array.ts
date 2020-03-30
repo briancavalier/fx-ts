@@ -31,7 +31,7 @@ export const zip = <Computations extends readonly Computation<any, any, any>[]>(
 
 // Return computation equivalent to the input computation that produces the earliest result
 // TODO: Consider requiring the input computations to be Async
-export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>>, AnyResult<Computations>, any> =>
+export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>>, AnyResult<Computations>, AnyResult<Computations>> =>
   op((c: AllCapabilities<Computations>) => resume<AnyResult<Computations>>(k => {
     const cancels = cs.map((computation: Computations[number]) =>
       runComputation(computation, c, (x: AnyResult<Computations>) => {
