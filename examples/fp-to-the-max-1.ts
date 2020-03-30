@@ -1,6 +1,7 @@
 import { co, get, unsafeRun, Resume, resumeNow, resumeLater, use, op } from '../src'
 import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
+import { attempt } from '../src/fail'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -43,9 +44,9 @@ const checkAnswer = (secret: number, guess: number): boolean =>
 const play = co(function* (name: string, min: number, max: number) {
   const secret = yield* randomInt(min, max)
   const result =
-    yield* timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `))
+    yield* attempt(timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `)))
 
-  if(typeof result === 'string') {
+  if (typeof result === 'string') {
     const guess = Number(result)
     if (!Number.isInteger(guess)) {
       yield* println('You did not enter an integer!')
@@ -61,9 +62,9 @@ const play = co(function* (name: string, min: number, max: number) {
 // Ask the user if they want to play again.
 // Note that we keep asking until the user gives an answer we recognize
 const checkContinue = co(function* (name: string) {
-  while(true) {
+  while (true) {
     const answer = yield* ask(`Do you want to continue, ${name}? (y or n) `)
-  
+
     switch (answer.toLowerCase()) {
       case 'y': return true
       case 'n': return false
@@ -81,7 +82,7 @@ const main = co(function* () {
 
   do {
     yield* play(name, min, max)
-  } while(yield* checkContinue(name))
+  } while (yield* checkContinue(name))
 
   yield* println(`Thanks for playing, ${name}.`)
 })
@@ -98,7 +99,7 @@ const capabilities = {
     resumeLater(k => {
       const t = setTimeout(k, ms)
       return () => clearTimeout(t)
-    }), 
+    }),
 
   print: (s: string): Resume<void> =>
     resumeNow(void process.stdout.write(s)),
@@ -118,6 +119,3 @@ const capabilities = {
 }
 
 unsafeRun(use(main(), capabilities))
-
-
-

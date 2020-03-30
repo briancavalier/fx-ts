@@ -34,10 +34,11 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Computation<Env<C, A>, A, 
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Computation<Env<C, A>, A, A>
 
+// Run a computation by satisfying its remaining capability requirements
 export const runComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>, c: Capabilities<Y>, k: (r: R) => Cancel): Cancel =>
   runResume(evalComputation(g, c), k)
 
-export const evalComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>, c: Capabilities<Y>): Resume<R> =>
+const evalComputation = <Y extends Env<any, N>, R, N>(g: Computation<Y, R, N>, c: Capabilities<Y>): Resume<R> =>
   resume(k => {
     const i = g[Symbol.iterator]()
     return stepComputation(i, i.next(), c, k)
@@ -59,11 +60,9 @@ export const get = <C>() => op<C, C>(resumeNow)
 
 // Satisfy some or all of a Computation's required capabilities.
 export const use = <Y extends Env<any, N>, R, N, C> (cg: Computation<Y, R, N>, c: C): Computation<Use<Y, C>, R, R> =>
-  op((c0: Capabilities<Use<Y, C>>) =>
-    evalComputation(cg, { ...c0 as any, ...c })) as Computation<Use<Y, C>, R, R>
+  op((c0: Capabilities<Use<Y, C>>) => evalComputation(cg, { ...c0 as any, ...c })) as Computation<Use<Y, C>, R, R>
 
 // Adapt a Computation that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <Y extends Env<any, N>, R, N, C>(cg: Computation<Y, R, N>, f: (c: C) => Capabilities<Y>): Computation<Embed<Y, C>, R, R> =>
-  op((c: C) =>
-    evalComputation(cg, f(c))) as Computation<Embed<Y, C>, R, R>
+  op((c: C) => evalComputation(cg, f(c))) as Computation<Embed<Y, C>, R, R>
