@@ -4,6 +4,7 @@ import { race } from './array'
 import { fail } from './fail'
 
 export type Delay = { delay(ms: number): Resume<void> }
+
 export const delay = (ms: number) => withEnv<Delay>(c => c.delay(ms))
 
 export const timeout = doFx(function* <Y, R>(ms: number, c: Fx<Y, R>) {
