@@ -35,12 +35,6 @@ type U2I<U> =
   (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
 type CapabilitiesOf<E> = E extends Pure<any> ? never : E extends Env<infer C, any> ? C : never
 
-export const pureEnv = <A>(a: A): Pure<A> =>
-  <C>(_: C) => resumeNow(a)
-
-export const chainEnv = <C1, C2, A, B> (e: Env<C1, A>, f: (a: A) => Env<C2, B>): Env<C1 & C2, B> =>
-  c12 => chainResume(e(c12), a => f(a)(c12))
-
 export type Resume<A> =
   | { now: true, value: A }
   | { now: false, run: (k: (a: A) => Cancel) => Cancel }
@@ -64,6 +58,3 @@ export const resumeLater = <A> (run: (k: (a: A) => void) => Cancel): Resume<A> =
 
 export const runResume = <A> (ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
   ra.now ? k(ra.value) : ra.run(k)
-
-export const chainResume = <A, B>(ra: Resume<A>, f: (a: A) => Resume<B>): Resume<B> =>
-  ra.now ? f(ra.value) : resume(k => ra.run(a => runResume(f(a), k)))

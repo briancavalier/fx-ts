@@ -1,14 +1,14 @@
-import { co, unsafeRun, resumeLater, resumeNow, use, Resume, op } from '../src'
+import { doFx, runFx, resumeLater, resumeNow, use, Resume, withEnv } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 type Print = { print(s: string): Resume<void> }
-const print = (s: string) => op<Print>(c => c.print(s))
+const print = (s: string) => withEnv<Print>(c => c.print(s))
 
 type Read = { read(): Resume<string> }
-const read = op<Read>(c => c.read())
+const read = withEnv<Read>(c => c.read())
 
-const main = co(function* () {
+const main = doFx(function* () {
   while(true) {
     yield* print('> ')
     const s = yield* read
@@ -32,4 +32,4 @@ const capabilities = {
 }
 const m = use(main(), capabilities)
 
-unsafeRun(m)
+runFx(m)

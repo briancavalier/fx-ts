@@ -1,4 +1,3 @@
 export * from './array'
-export * from './computation'
+export * from './fx'
 export * from './env'
-export * from './run'

@@ -1,4 +1,4 @@
-import { co, get, unsafeRun, Resume, resumeNow, resumeLater, use, op } from '../src'
+import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, withEnv } from '../src'
 import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
 import { attempt } from '../src/fail'
@@ -11,20 +11,20 @@ import { attempt } from '../src/fail'
 // Capabilities the game will need
 
 type Print = { print(s: string): Resume<void> }
-const print = (s: string) => op<Print>(c => c.print(s))
+const print = (s: string) => withEnv<Print>(c => c.print(s))
 
 const println = (s: string) => print(`${s}\n`)
 
 type Read = { read(): Resume<string> }
-const read = op<Read>(c => c.read())
+const read = withEnv<Read>(c => c.read())
 
-const ask = co(function* (prompt: string) {
+const ask = doFx(function* (prompt: string) {
   yield* print(prompt)
   return yield* read
 })
 
 type RandomInt = { randomInt(min: number, max: number): Resume<number> }
-const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(min, max))
+const randomInt = (min: number, max: number) => withEnv<RandomInt>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
 // The game
@@ -41,7 +41,7 @@ const checkAnswer = (secret: number, guess: number): boolean =>
 
 // Play one round of the game.  Generate a number and ask the user
 // to guess it.
-const play = co(function* (name: string, min: number, max: number) {
+const play = doFx(function* (name: string, min: number, max: number) {
   const secret = yield* randomInt(min, max)
   const result =
     yield* attempt(timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `)))
@@ -61,7 +61,7 @@ const play = co(function* (name: string, min: number, max: number) {
 
 // Ask the user if they want to play again.
 // Note that we keep asking until the user gives an answer we recognize
-const checkContinue = co(function* (name: string) {
+const checkContinue = doFx(function* (name: string) {
   while (true) {
     const answer = yield* ask(`Do you want to continue, ${name}? (y or n) `)
 
@@ -73,7 +73,7 @@ const checkContinue = co(function* (name: string) {
 })
 
 // Main game loop. Play round after round until the user chooses to quit
-const main = co(function* () {
+const main = doFx(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
   yield* delay(1000)
@@ -118,4 +118,4 @@ const capabilities = {
     resumeNow(Math.floor(min + (Math.random() * (max - min))))
 }
 
-unsafeRun(use(main(), capabilities))
+runFx(use(main(), capabilities))
