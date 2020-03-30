@@ -1,5 +1,5 @@
 import { Computation, Yield, Next, Return, op, runComputation } from './computation'
-import { Capabilities, Env, runResume, resume, uncancelable } from './env'
+import { Capabilities, Env, resume, uncancelable } from './env'
 
 // Arrays and tuples of computations
 // Strongly-typed variadic operations support homogeneous arrays as well as
@@ -21,7 +21,7 @@ export const zip = <Computations extends readonly Computation<any, any, any>[]>(
     const results = Array(remaining) as Writeable<AllResult<Computations>>
 
     const cancels = cs.map((computation: Computations[typeof i], i) =>
-      runResume(runComputation(computation)(c), (x: AnyResult<Computations>) => {
+      runComputation(computation, c, (x: AnyResult<Computations>) => {
         results[i] = x
         return --remaining === 0 ? k(results) : uncancelable
       }))
@@ -34,7 +34,7 @@ export const zip = <Computations extends readonly Computation<any, any, any>[]>(
 export const race = <Computations extends readonly Computation<any, any, any>[]>(...cs: Computations): Computation<Env<AllCapabilities<Computations>, AnyResult<Computations>>, AnyResult<Computations>, any> =>
   op((c: AllCapabilities<Computations>) => resume<AnyResult<Computations>>(k => {
     const cancels = cs.map((computation: Computations[number]) =>
-      runResume(runComputation(computation)(c), (x: AnyResult<Computations>) => {
+      runComputation(computation, c, (x: AnyResult<Computations>) => {
         cancelAll()
         return k(x)
       }))
