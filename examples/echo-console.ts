@@ -1,12 +1,12 @@
-import { doFx, runFx, resumeLater, resumeNow, use, Resume, withEnv } from '../src'
+import { doFx, resumeLater, resumeNow, use, Resume, op, runFx, runFxWith } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 type Print = { print(s: string): Resume<void> }
-const print = (s: string) => withEnv<Print>(c => c.print(s))
+const print = (s: string) => op<Print>(c => c.print(s))
 
 type Read = { read(): Resume<string> }
-const read = withEnv<Read>(c => c.read())
+const read = op<Read>(c => c.read())
 
 const main = doFx(function* () {
   while(true) {
@@ -30,6 +30,5 @@ const capabilities = {
       return () => readline.removeListener('line', handler).close()
     })
 }
-const m = use(main(), capabilities)
 
-runFx(m)
+runFx(use(main(), capabilities))

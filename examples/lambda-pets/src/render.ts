@@ -1,8 +1,7 @@
 import { Location, Pets } from './model'
 
-export const renderError = (e: Error): string => wrapHtml(`
+export const renderError = (): string => wrapHtml(`
   <h1>Darn! We couldn't find adoptable pets for you<h1>
-  <p>${e.message}</p>
 `)
 
 export const renderPets = (location: Location, radiusMiles: number, pets: Pets): string => wrapHtml(`

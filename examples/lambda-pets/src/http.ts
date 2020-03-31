@@ -1,6 +1,7 @@
-import { resumeLater, Resume, op, co } from '../../../src'
+import { resumeLater, Resume, op, doFx } from '../../../src'
+import { fail } from '../../../src/fail'
 import { request as httpsRequest } from 'https'
-import { IncomingMessage, RequestOptions, request } from 'http'
+import { IncomingMessage, request } from 'http'
 import { parse as parseUrl } from 'url'
 
 type Request = Get | Post
@@ -8,23 +9,27 @@ type Get = Req & { method: 'GET' }
 type Post = Req & { method: 'POST', body: string }
 type Req = { url: string, headers: { [name: string]: string } }
 
-export type Http = { http<A>(r: Request): Resume<A | Error> }
-export const http = <A>(r: Request) => op<Http, A | Error>(c => c.http(r))
+export type Http = { http(r: Request): Resume<[IncomingMessage, string]> }
+export const http = (r: Request) => op<Http>(c => c.http(r))
 
-export const getJson = co(function*<A>(url: string, headers: { [name: string]: string } = {}) {
-  return yield* http<A>({ method: 'GET', url, headers })
+export const getJson = doFx(function*<R>(url: string, headers: { [name: string]: string } = {}) {
+  const [response, body] = yield* http({ method: 'GET', url, headers })
+  if (response.statusCode !== 200) return yield* fail(new Error(`Request failed ${response.statusCode}: ${url} ${body}`))
+  return JSON.parse(body) as R
 })
 
-export const postJson = co(function*<A, R>(url: string, a: A, headers: { [name: string]: string } = {}) {
-  return yield* http<R>({ method: 'POST', url, headers, body: JSON.stringify(a) })
+export const postJson = doFx(function*<A, R>(url: string, a: A, headers: { [name: string]: string } = {}) {
+  const [response, body] = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
+  if (response.statusCode !== 200) return yield* fail(new Error(`Request failed ${response.statusCode}: ${url} ${body}`))
+  return JSON.parse(body) as R
 })
 
 export const httpImpl = {
-  http: <A>(r: Request): Resume<A | Error> =>
+  http: (r: Request): Resume<[IncomingMessage, string]> =>
     resumeLater(k => {
       const ro = { method: r.method, ...parseUrl(r.url), headers: r.headers }
       const req = ro.protocol === 'https:' ? httpsRequest(ro) : request(ro)
-      req.on('response', m => readResponse<A>(r, m).then(k, k)).on('error', k)
+      req.on('response', m => readResponse(m).then(s => k([m, s]), e => k([m, String(e)])))
 
       if(r.method === 'POST') req.write(r.body)
 
@@ -33,9 +38,8 @@ export const httpImpl = {
     }),
 }
 
-const readResponse = async <A>(r: RequestOptions, m: IncomingMessage): Promise<A> => {
+const readResponse = async (m: IncomingMessage): Promise<string> => {
   let data = ''
   for await (const d of m) data += d
-  if (m.statusCode !== 200) throw new Error(`Request failed ${m.statusCode}: ${data} ${JSON.stringify(r)}`)
-  return JSON.parse(data)
+  return data
 }

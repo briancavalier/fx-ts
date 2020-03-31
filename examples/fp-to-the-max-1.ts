@@ -1,4 +1,4 @@
-import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, withEnv } from '../src'
+import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, op, runFxWith } from '../src'
 import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
 import { attempt } from '../src/fail'
@@ -11,12 +11,12 @@ import { attempt } from '../src/fail'
 // Capabilities the game will need
 
 type Print = { print(s: string): Resume<void> }
-const print = (s: string) => withEnv<Print>(c => c.print(s))
+const print = (s: string) => op<Print>(c => c.print(s))
 
 const println = (s: string) => print(`${s}\n`)
 
 type Read = { read(): Resume<string> }
-const read = withEnv<Read>(c => c.read())
+const read = op<Read>(c => c.read())
 
 const ask = doFx(function* (prompt: string) {
   yield* print(prompt)
@@ -24,7 +24,7 @@ const ask = doFx(function* (prompt: string) {
 })
 
 type RandomInt = { randomInt(min: number, max: number): Resume<number> }
-const randomInt = (min: number, max: number) => withEnv<RandomInt>(c => c.randomInt(min, max))
+const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(min, max))
 
 // -------------------------------------------------------------------
 // The game

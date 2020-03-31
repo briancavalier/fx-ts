@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import 'source-map-support/register'
 
-import { Resume, unsafeRun, resumeNow, use, resumeLater } from '../../src'
+import { Resume, resumeNow, use, resumeLater, runFx, uncancelable } from '../../src'
 import { httpImpl } from './src/http'
 import { getAdoptablePetsNear } from './src/pets'
 
@@ -31,6 +31,6 @@ const capabilities = {
 }
 
 export const handler: APIGatewayProxyHandler = event =>
-  new Promise<APIGatewayProxyResult>(resolve =>
-    unsafeRun(use(getAdoptablePetsNear(event), capabilities), resolve))
-
+  new Promise<APIGatewayProxyResult>(resolve => {
+    runFx(use(getAdoptablePetsNear(event), capabilities), a => (resolve(a), uncancelable))
+  })
