@@ -64,7 +64,7 @@ const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResu
     if (ir.done) return k(ir.value)
 
     const r = ir.value(c)
-    if (!r.now) return runResume(r, n => stepFx(i, i.next(n), c, k))
+    if (!r.now) return r.run(n => stepFx(i, i.next(n), c, k))
 
     ir = i.next(r.value)
   }
