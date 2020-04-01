@@ -9,27 +9,46 @@ type Get = Req & { method: 'GET' }
 type Post = Req & { method: 'POST', body: string }
 type Req = { url: string, headers: { [name: string]: string } }
 
-export type Http = { http(r: Request): Resume<[IncomingMessage, string]> }
+type HttpResult =
+  | { type: 'Response', response: IncomingMessage, body: string }
+  | { type: 'ResponseFailure', response: IncomingMessage, error: Error }
+  | { type: 'RequestFailure', error: Error }
+
+export type Http = { http(r: Request): Resume<HttpResult> }
 export const http = (r: Request) => op<Http>(c => c.http(r))
 
 export const getJson = doFx(function*<R>(url: string, headers: { [name: string]: string } = {}) {
-  const [response, body] = yield* http({ method: 'GET', url, headers })
-  if (response.statusCode !== 200) return yield* fail(new Error(`Request failed ${response.statusCode}: ${url} ${body}`))
-  return JSON.parse(body) as R
+  const result = yield* http({ method: 'GET', url, headers })
+  return yield* interpretResult<R>(url, result)
 })
 
 export const postJson = doFx(function*<A, R>(url: string, a: A, headers: { [name: string]: string } = {}) {
-  const [response, body] = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
-  if (response.statusCode !== 200) return yield* fail(new Error(`Request failed ${response.statusCode}: ${url} ${body}`))
-  return JSON.parse(body) as R
+  const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
+  return yield* interpretResult<R>(url, result)
 })
 
+const interpretResult = doFx(function* <R>(url: string, result: HttpResult) {
+  return result.type === 'Response' && result.response.statusCode === 200
+    ? JSON.parse(result.body) as R
+    : yield* fail(interpretFailure(url, result))
+})
+
+const interpretFailure = (url: string, result: HttpResult): Error =>
+  result.type === 'Response'
+    ? new Error(`Request failed ${result.response.statusCode}: ${url} ${result.body}`)
+    : result.type === 'ResponseFailure'
+      ? new Error(`Response failed ${result.response.statusCode}: ${url} ${result.error}`)
+      : new Error(`Request failed: ${url} ${result.error}`)
+
 export const httpImpl = {
-  http: (r: Request): Resume<[IncomingMessage, string]> =>
+  http: (r: Request): Resume<HttpResult> =>
     resumeLater(k => {
-      const ro = { method: r.method, ...parseUrl(r.url), headers: r.headers }
-      const req = ro.protocol === 'https:' ? httpsRequest(ro) : request(ro)
-      req.on('response', m => readResponse(m).then(s => k([m, s]), e => k([m, String(e)])))
+      const options = { method: r.method, ...parseUrl(r.url), headers: r.headers }
+      const req = options.protocol === 'https:' ? httpsRequest(options) : request(options)
+      req.on('response', response => readResponse(response).then(
+        body => k({ type: 'Response', response, body }),
+        error => k({ type: 'ResponseFailure', response, error })))
+      req.on('error', error => k({ type: 'RequestFailure', error }))
 
       if(r.method === 'POST') req.write(r.body)
 

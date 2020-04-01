@@ -17,14 +17,18 @@ export type Config = {
   ipstackKey: string
 }
 
+const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
+
 export const getAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
   const p = yield* attempt(tryGetAdoptablePetsNear(event))
-  return p || { statusCode: 500, body: renderError() }
+  return p instanceof Error
+    ? { statusCode: 500, body: renderError(p.message), headers: HEADERS }
+    : { statusCode: 200, body: p, headers: HEADERS }
 })
 
 export const tryGetAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
   const { radiusMiles, locationTimeout, petsTimeout } = yield* get<Config>()
-  const host = getHost(event)
+  const host = event.requestContext.identity.sourceIp
 
   const location = yield* timeout(locationTimeout, getLocation(host))
 
@@ -32,14 +36,7 @@ export const tryGetAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEve
 
   const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
-  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.animals.length}`)
+  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${JSON.stringify(pets)}`)
 
-  return {
-    statusCode: 200,
-    body: renderPets(location, radiusMiles, pets),
-    headers: { 'Content-Type': 'text/html;charset=utf-8' }
-  }
+  return renderPets(location, radiusMiles, pets)
 })
-
-const getHost = (event: APIGatewayProxyEvent): string =>
-  event.requestContext.identity.sourceIp

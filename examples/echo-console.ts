@@ -1,4 +1,4 @@
-import { doFx, resumeLater, resumeNow, use, Resume, op, runFx, runFxWith } from '../src'
+import { doFx, resumeLater, resumeNow, use, Resume, op, runFx } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 

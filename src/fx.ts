@@ -15,8 +15,8 @@ export interface FxIterable<Y, R> {
   [Symbol.iterator](): Iterator<Y, R, unknown>
 }
 
-export type Effects<E> = E extends Fx<infer C, any> ? C : never
-export type Return<C> = C extends Fx<any, infer A> ? A : never
+export type Effects<F> = F extends Fx<infer C, any> ? C : never
+export type Return<F> = F extends Fx<any, infer A> ? A : never
 
 // Get the type of capabilities required by Envs
 export type Capabilities<E extends Env<any, any>> = Intersect<CapabilitiesOf<E>>
@@ -39,9 +39,14 @@ export const op = <C, A = Result<C>>(env: Env<C, A>): Fx<C, A> => ({
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Fx<C, A>
 
+// Create an Fx that returns A, with no effects
+export const pure = <A>(a: A): Fx<Pure, A> => ({
+  *[Symbol.iterator](): Iterator<never, A, A> { return a }
+}) as Fx<Pure, A>
+
 // Run an Fx whose capability requirements have all been satisfied
 export const runFx = <A>(fx: Fx<Pure, A>, k: (r: A) => Cancel = () => uncancelable): Cancel =>
-  runFxWith(fx, {} as never, k)
+  runFxWith(fx, {} as Pure, k)
 
 // Run an Fx by providing its remaining capability requirements
 export const runFxWith = <CR, CP extends CR, A>(fx: Fx<CR, A>, c: CP, k: (r: A) => Cancel = () => uncancelable): Cancel =>
@@ -69,7 +74,7 @@ const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResu
 export const get = <C>() => op<C, C>(resumeNow)
 
 declare const PURE: unique symbol
-interface Pure { [PURE]: typeof PURE }
+export interface Pure { [PURE]: true }
 
 export type Use<CR, CP> =
   CP extends CR ? Pure : CR extends CP ? Omit<CR, keyof CP> : CR

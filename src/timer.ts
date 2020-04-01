@@ -13,5 +13,5 @@ export const timeout = doFx(function* <C, A>(ms: number, c: Fx<C, A>) {
 
 const delayFail = doFx(function* (ms: number) {
   yield* delay(ms)
-  return yield* fail(undefined)
+  return yield* fail(new Error(`Timeout: ${ms}ms`))
 })
