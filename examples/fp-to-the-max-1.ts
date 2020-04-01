@@ -1,4 +1,4 @@
-import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, op, runFxWith } from '../src'
+import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, op } from '../src'
 import { delay, timeout } from '../src/timer'
 import { createInterface } from 'readline'
 import { attempt } from '../src/fail'

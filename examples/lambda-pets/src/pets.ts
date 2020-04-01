@@ -1,10 +1,11 @@
 import { PetfinderAuth, getPets } from './petfinder'
-import { get, Resume, op, doFx } from '../../../src'
+import { get, Resume, op, doFx, pure } from '../../../src'
 import { APIGatewayProxyEvent } from 'aws-lambda'
 import { timeout } from '../../../src/timer'
 import { getLocation } from './ipstack'
 import { renderPets, renderError } from './render'
-import { attempt } from '../../../src/fail'
+import { attempt, catchFail } from '../../../src/fail'
+import { defaultLocation } from './model'
 
 export type Log = { log(s: string): Resume<void> }
 export const log = (s: string) => op<Log>(c => c.log(s))
@@ -30,13 +31,13 @@ export const tryGetAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEve
   const { radiusMiles, locationTimeout, petsTimeout } = yield* get<Config>()
   const host = event.requestContext.identity.sourceIp
 
-  const location = yield* timeout(locationTimeout, getLocation(host))
+  const location = yield* catchFail(timeout(locationTimeout, getLocation(host)), () => pure(defaultLocation))
 
   yield* log(`location for ${host}: ${location.latitude} ${location.longitude}`)
 
   const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
-  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${JSON.stringify(pets)}`)
+  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.animals.length}`)
 
   return renderPets(location, radiusMiles, pets)
 })

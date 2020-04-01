@@ -46,7 +46,7 @@ export const httpImpl = {
       req.on('response', response => readResponse(response).then(
         body => k({ type: 'Response', response, body }),
         error => k({ type: 'ResponseFailure', response, error })))
-      req.on('error', error => k({ type: 'RequestFailure', error }))
+      req.on('error', e => console.error('http request error', e))
 
       if(r.method === 'POST') req.write(r.body)
 
