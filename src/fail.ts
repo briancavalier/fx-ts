@@ -1,27 +1,22 @@
-import { co, Computation, op, runComputation } from './computation'
-import { Capabilities, Env, Resume, resume } from './env'
+import { Fx, op, runFxWith, Use, pure } from './fx'
+import { Resume, resume, uncancelable } from './env'
 
-export type Remove<E extends Computation<any, any, any>, C, M = 'required capability not in env'> =
-  E extends Computation<infer Y, infer R, infer N> ? AssertExtends<Capabilities<Y>, C, R, N, M> : never
+export type Fail = { fail: (e: Error) => Resume<never> }
 
-type AssertExtends<Sub, Sup, R, N, M> =
-  Sub extends Sup ? Computation<Env<Omit<Sub, keyof Sup>, R>, R, N>
-  : { error: M, required: Sup, env: Sub }
+export const fail = (e: Error) => op<Fail>(c => c.fail(e))
 
-export type Fail<E> = { fail(e: E): Resume<never> }
+export const attempt = <C extends Fail, A>(fx: Fx<C, A>) =>
+  catchFail(fx, (e: Error) => pure(e))
 
-export const fail = co(function* <E>(e: E) {
-  return yield (c: Fail<E>) => c.fail(e)
-})
-
-export const attempt = <Y extends Env<any, any>, R, N>(co: Computation<Y, R, N>) =>
-  op((c): Resume<R | void> => resume(k => {
-    const handleRaise = {
-      fail() {
+export const catchFail = <C1 extends Fail, C2, A, B>(fx: Fx<C1, A>, f: (e: Error) => Fx<C2, B>) =>
+  op((c): Resume<A | B> => resume(k => {
+    const handle = {
+      fail: (e: Error) => {
         cancel()
-        return resume(_ => k())
+        return resume(() => runFxWith(f(e), c, k))
       }
-    } as Fail<unknown>
-    const cancel = runComputation(co, { ...c as any, ...handleRaise }, k)
+    }
+    let cancel = uncancelable
+    cancel = runFxWith(fx, { ...c as any, ...handle }, k)
     return cancel
-  })) as Remove<Computation<Y, R | void, N>, Fail<any>>
+  })) as Fx<Use<C1, Fail> & C2, A | B>

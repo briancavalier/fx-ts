@@ -21,3 +21,9 @@ export type Pet = {
 export type Photo = {
   medium: string
 }
+
+export const defaultLocation: Location = {
+  latitude: 40.440624,
+  longitude: -79.995888,
+  city: 'Pittsburgh'
+}

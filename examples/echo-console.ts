@@ -1,4 +1,4 @@
-import { co, unsafeRun, resumeLater, resumeNow, use, Resume, op } from '../src'
+import { doFx, resumeLater, resumeNow, use, Resume, op, runFx } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
@@ -8,7 +8,7 @@ const print = (s: string) => op<Print>(c => c.print(s))
 type Read = { read(): Resume<string> }
 const read = op<Read>(c => c.read())
 
-const main = co(function* () {
+const main = doFx(function* () {
   while(true) {
     yield* print('> ')
     const s = yield* read
@@ -30,6 +30,5 @@ const capabilities = {
       return () => readline.removeListener('line', handler).close()
     })
 }
-const m = use(main(), capabilities)
 
-unsafeRun(m)
+runFx(use(main(), capabilities))

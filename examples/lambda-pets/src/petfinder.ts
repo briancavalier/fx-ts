@@ -1,4 +1,4 @@
-import { co, get } from '../../../src'
+import { get, doFx } from '../../../src'
 import { GeoLocation, Pets } from './model'
 import { postJson, getJson } from './http'
 
@@ -12,11 +12,11 @@ export type PetfinderAuth = {
   client_secret: string
 }
 
-export const getPets = co(function* (l: GeoLocation, radiusMiles: number) {
-  const { petfinderAuth } = yield* get<{ petfinderAuth: PetfinderAuth }>()
-  const token = yield* postJson<PetfinderAuth, PetfinderToken>('https://api.petfinder.com/v2/oauth2/token', petfinderAuth)
+export type PetfinderConfig = { petfinderAuth: PetfinderAuth }
 
-  if (token instanceof Error) return token
+export const getPets = doFx(function* (l: GeoLocation, radiusMiles: number) {
+  const { petfinderAuth } = yield* get<PetfinderConfig>()
+  const token = yield* postJson<PetfinderAuth, PetfinderToken>('https://api.petfinder.com/v2/oauth2/token', petfinderAuth)
 
   return yield* getJson<Pets>(`https://api.petfinder.com/v2/animals?location=${l.latitude},${l.longitude}&distance=${Math.ceil(radiusMiles)}`, {
     Authorization: `Bearer ${token.access_token}`

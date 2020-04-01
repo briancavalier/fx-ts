@@ -1,9 +1,11 @@
 import { PetfinderAuth, getPets } from './petfinder'
-import { co, get, Resume, op } from '../../../src'
+import { get, Resume, op, doFx, pure } from '../../../src'
 import { APIGatewayProxyEvent } from 'aws-lambda'
 import { timeout } from '../../../src/timer'
 import { getLocation } from './ipstack'
-import { renderError, renderPets } from './render'
+import { renderPets, renderError } from './render'
+import { attempt, catchFail } from '../../../src/fail'
+import { defaultLocation } from './model'
 
 export type Log = { log(s: string): Resume<void> }
 export const log = (s: string) => op<Log>(c => c.log(s))
@@ -16,28 +18,26 @@ export type Config = {
   ipstackKey: string
 }
 
-export const getAdoptablePetsNear = co(function* (event: APIGatewayProxyEvent) {
+const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
+
+export const getAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
+  const p = yield* attempt(tryGetAdoptablePetsNear(event))
+  return p instanceof Error
+    ? { statusCode: 500, body: renderError(p.message), headers: HEADERS }
+    : { statusCode: 200, body: p, headers: HEADERS }
+})
+
+export const tryGetAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
   const { radiusMiles, locationTimeout, petsTimeout } = yield* get<Config>()
-  const host = getHost(event)
+  const host = event.requestContext.identity.sourceIp
 
-  const location = (yield* timeout(locationTimeout, getLocation(host))) || new Error(`Timeout trying to get location for ${host}`)
-
-  if (location instanceof Error) return { statusCode: 500, body: renderError(location) }
+  const location = yield* catchFail(timeout(locationTimeout, getLocation(host)), () => pure(defaultLocation))
 
   yield* log(`location for ${host}: ${location.latitude} ${location.longitude}`)
 
-  const pets = (yield* timeout(petsTimeout, getPets(location, radiusMiles))) || new Error(`Timeout trying to get pets within ${radiusMiles} miles of ${location.city}`)
-
-  if (pets instanceof Error) return { statusCode: 500, body: renderError(pets) }
+  const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
   yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.animals.length}`)
 
-  return {
-    statusCode: 200,
-    body: renderPets(location, radiusMiles, pets),
-    headers: { 'Content-Type': 'text/html;charset=utf-8' }
-  }
+  return renderPets(location, radiusMiles, pets)
 })
-
-const getHost = (event: APIGatewayProxyEvent): string =>
-  event.requestContext.identity.sourceIp

@@ -1,14 +1,14 @@
 import { Location, Pets } from './model'
 
-export const renderError = (e: Error): string => wrapHtml(`
-  <h1>Darn! We couldn't find adoptable pets for you<h1>
-  <p>${e.message}</p>
+export const renderError = (message: string): string => wrapHtml(`
+  <h1>Darn! We couldn't find adoptable pets for you</h1>
+  <p>${message}</p>
 `)
 
 export const renderPets = (location: Location, radiusMiles: number, pets: Pets): string => wrapHtml(`
   <h1>${pets.animals.length === 0 ? 'No adoptable' : 'Adoptable'} pets within ${radiusMiles} miles of ${location.city}</h1>
   <p>${pets.animals.filter(a => !!a.photos.length).map(a =>
-  `<a href="${a.url}"><img src="${a.photos[0]?.medium}" alt="${a.name}"></a>`).join('')}
+    `<a href="${a.url}"><img src="${a.photos[0]?.medium}" alt="${a.name}"></a>`).join('')}
   </p>
 `)
 
