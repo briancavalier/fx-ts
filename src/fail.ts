@@ -5,10 +5,10 @@ export type Fail = { fail: (e: Error) => Resume<never> }
 
 export const fail = (e: Error) => op<Fail>(c => c.fail(e))
 
-export const attempt = <T extends PropertyKey, C extends Fail, A>(fx: Fx<C, A>) =>
+export const attempt = <C extends Fail, A>(fx: Fx<C, A>) =>
   catchFail(fx, (e: Error) => pure(e))
 
-export const catchFail = <T extends PropertyKey, C1 extends Fail, C2, A, B>(fx: Fx<C1, A>, f: (e: Error) => Fx<C2, B>) =>
+export const catchFail = <C1 extends Fail, C2, A, B>(fx: Fx<C1, A>, f: (e: Error) => Fx<C2, B>) =>
   op((c): Resume<A | B> => resume(k => {
     const handle = {
       fail: (e: Error) => {
