@@ -56,8 +56,9 @@ Check out the [complete echo-console example and others](examples) to see how to
 
 ## API
 
+_Coming soon_
 
-# Inspiration
+## Inspiration
 
 * [ZIO](https://zio.dev)
 * [forgefx](https://github.com/briancavalier/forgefx)
