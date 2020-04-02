@@ -60,6 +60,7 @@ _Coming soon_
 
 ## Inspiration
 
+* [koka](https://github.com/koka-lang/koka)
 * [ZIO](https://zio.dev)
 * [forgefx](https://github.com/briancavalier/forgefx)
 * [ambient](https://github.com/briancavalier/ambient)
