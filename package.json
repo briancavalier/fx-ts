@@ -2,7 +2,7 @@
   "name": "fx-ts",
   "version": "1.4.0",
   "description": "Computational environments and effects for TypeScript",
-  "main": "index.js",
+  "main": "module/index.js",
   "type": "module",
   "repository": {
     "type": "git",
