@@ -1,10 +1,8 @@
-<center>
-<h1>fx-ts</h1>
+<h1 align="center">fx-ts</h1>
 
-<h3>Functional environments & effects for TypeScript</h3>
+<h3 align="center">Functional environments & effects for TypeScript</h3>
 
-[Introduction](#introduction) • [API](#api) • [Examples](examples)
-</center>
+<p align="center"><a href="#introduction">Introduction</a> • <a href="#api">API</a> • <a href="#examples">Examples</a></p>
 
 ## Features
 
