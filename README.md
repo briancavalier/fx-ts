@@ -1,8 +1,10 @@
-# fx-ts
+<center>
+<h1>fx-ts</h1>
 
-Functional effects for TypeScript
+<h3>Functional environments & effects for TypeScript</h3>
 
 [Introduction](#introduction) • [API](#api) • [Examples](examples)
+</center>
 
 ## Features
 
@@ -11,7 +13,7 @@ Functional effects for TypeScript
 * **Effect inference**: Effects can be inferred without explicit type annotations
 * Fx-ts effects are
   * **Extensible**: Implement new effects in user land
-  * **Testable**: Code to effect interfaces, use different concrete implementations for development, production, and testing
+  * **Testable**: Code to interfaces, and easily use different implementations for development, production, and testing
   * **Efficient**: Synchronous and Asynchronous effects run in _constant stack_
 
 ## Install
