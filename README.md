@@ -1,4 +1,4 @@
-# ƒx-ts
+# fx-ts
 
 Functional effects for TypeScript
 
