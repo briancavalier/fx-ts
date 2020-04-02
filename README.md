@@ -1,33 +1,63 @@
-# fx-ts: Computational environments
+# fx-ts
 
-> `fx-ts`: A library for writing effectful, functional programs in TypeScript.
+Functional effects for TypeScript
 
-* [Requirements](#requirements)
-* [Install](#install)
-* [Introduction](#introduction)
-* [Examples](examples)
+[Features](#features) • [Install](#install) • [Introduction](#introduction) • [API](#api) • [Examples](examples)
 
-## Requirements
+## Features
 
-* TypeScript >= 3.7
-* [Generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*)
+* Do-notation for effects: Write _imperative-looking_ code that's fully referentially transparent
+* Seamless asychrony and rigorous cancelation that Just Works
+* Effect inference: Effects can be inferred without explicit type annotations
+* Testable: Code to effect interfaces, pick concrete implementations for development, production, and testing
+* Extensible: Implement new effects in user land
+* Efficient: Snchronous and Asynchronous effects run in _constant stack_
 
 ## Install
 
 ```shell
-npm install fx-ts --save
+npm install --save fx-ts
 ```
 
 ## Introduction
 
-Pure functions are easy to reason about and test because they aren't entangled with the environment in which they're called. They always give the same answer for the same inputs. Nevertheless, useful programs need to interact with their environment, e.g., databases, external services, or configuration.
+Pure functions are easy to reason about and test because they aren't entangled with the environment in which they're called. They always give the same answer for the same inputs. Nevertheless, useful programs need to interact with their environment.  They need access to databases, external services, or configuration, and need to perform effects like reading and writing files, updating databases, etc.
 
-The goal of fx-ts is to help in writing programs that interact with their environment _and_ that are easy to reason about and test.
+The goal of fx-ts is to help in writing programs that interact with their environment _and_ are easy to reason about and test.
 
-### Environments and Generators in fx-ts
+## Examples
 
-In `fx-ts`, generators yield `Env`s (environments) that express what they need from the environment in their signature.  The `Env` type is basically a Reader type—which are suitable for passing (implicit) configuration information through a computation (but are also used to do that which in object-oriented programming is called _dependency injection_)—that also handles asynchronous operations.
+```ts
+// Abstract Print & Read effects, and simple operations
+// to construct them
+type Print = { print(s: string): Resume<void> }
+const print = (s: string): Fx<Print, void> => op(c => c.print(s))
 
-The core of `fx-ts` is `chainEnv`, which aggregates capability requirements via intersection type, and the `Use` type-level function, which eliminates capability requirements.
+type Read = { read(): Resume<string> }
+const read: Fx<Read, string> = op(c => c.read())
 
-The ideas are similar to those which [ZIO](https://zio.dev/) enviroments are build on.
+const main = doFx(function* () {
+  while(true) {
+    yield* print('> ')
+    const s = yield* read
+    yield* print(`${s}\n`)
+  }
+})
+
+const capabilities = {
+  // ...Concrete implementation of Print and Read effects...
+}
+
+runFxWith(main(), capabilities)
+```
+
+Check out the [complete echo-console example and others](examples) to see how to implement capabilities.
+
+## API
+
+
+# Inspiration
+
+* [ZIO](https://zio.dev)
+* [forgefx](https://github.com/briancavalier/forgefx)
+* [ambient](https://github.com/briancavalier/ambient)
