@@ -1,4 +1,4 @@
-# fx-ts
+# ƒx-ts
 
 Functional effects for TypeScript
 
@@ -6,12 +6,13 @@ Functional effects for TypeScript
 
 ## Features
 
-* Do-notation for effects: Write _imperative-looking_ code that's fully referentially transparent
-* Seamless asychrony and rigorous cancelation that Just Works
-* Effect inference: Effects can be inferred without explicit type annotations
-* Testable: Code to effect interfaces, pick concrete implementations for development, production, and testing
-* Extensible: Implement new effects in user land
-* Efficient: Snchronous and Asynchronous effects run in _constant stack_
+* **Do-notation for effects**: Write _imperative-looking_ code that's fully referentially transparent
+* **Seamless asychrony with cancelation**
+* **Effect inference**: Effects can be inferred without explicit type annotations
+* Fx-ts effects are
+  * **Extensible**: Implement new effects in user land
+  * **Testable**: Code to effect interfaces, use different concrete implementations for development, production, and testing
+  * **Efficient**: Synchronous and Asynchronous effects run in _constant stack_
 
 ## Install
 
