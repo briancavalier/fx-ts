@@ -2,7 +2,7 @@
 
 Functional effects for TypeScript
 
-[Features](#features) • [Install](#install) • [Introduction](#introduction) • [API](#api) • [Examples](examples)
+[Introduction](#introduction) • [API](#api) • [Examples](examples)
 
 ## Features
 
