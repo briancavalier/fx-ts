@@ -1,8 +1,8 @@
 {
   "name": "fx-ts",
   "version": "1.4.0",
-  "description": "Computational environments for TypeScript",
-  "main": "index.js",
+  "description": "Computational environments and effects for TypeScript",
+  "main": "module/index.js",
   "type": "module",
   "repository": {
     "type": "git",
@@ -11,20 +11,16 @@
   "scripts": {
     "test": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "postpublish": "rimraf *.js *.js.map *.d.ts",
     "build": "tsc"
   },
   "files": [
-    "*.js",
-    "*.js.map",
-    "*.d.ts"
+    "module"
   ],
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "13.9.8",
-    "rimraf": "3.0.2",
     "ts-node": "8.8.1",
     "typescript": "3.8.3"
   }

@@ -44,3 +44,4 @@ node_modules/
 .rts2_cache_*/
 experiments/
 .vscode/
+module/

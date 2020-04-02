@@ -10,8 +10,7 @@
     "strict": true,
     "sourceMap": true,
     "declaration": true,
-    "declarationDir": ".",
-    "outDir": ".",
+    "outDir": "module",
     "typeRoots": [
       "node_modules/@types"
     ]
