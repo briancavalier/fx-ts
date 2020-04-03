@@ -1,7 +1,7 @@
 import { Resume, Cancel, resume } from './env'
 import { op, Fx, doFx, get, runFx } from './fx'
 import { fail, Fail } from './fail'
-import { AllCapabilities, AnyResult } from './array'
+import { AllEffects, AnyResult } from './array'
 
 export type AsyncTask<A> = (k: (a: A) => Cancel) => Cancel
 
@@ -26,8 +26,8 @@ const delayFail = (ms: number): Fx<Delay & Async & Fail, never> => doFx(function
 
 // Return computation equivalent to the input computation that produces the earliest result
 // TODO: Consider requiring the input computations to be Async
-export const race = <Fxs extends readonly Fx<any, any>[]>(...cs: Fxs): Fx<AllCapabilities<Fxs>, AnyResult<Fxs>> =>
-  op((c: AllCapabilities<Fxs>) => resume<AnyResult<Fxs>>(k => {
+export const race = <Fxs extends readonly Fx<any, any>[]>(...cs: Fxs): Fx<AllEffects<Fxs>, AnyResult<Fxs>> =>
+  op(c => resume<AnyResult<Fxs>>(k => {
     const cancels = cs.map((computation: Fxs[number]) =>
       runFx(computation, c, (x: AnyResult<Fxs>) => {
         cancelAll()

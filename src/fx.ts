@@ -19,7 +19,7 @@ export type Effects<F> = F extends Fx<infer C, any> ? C : never
 export type Return<F> = F extends Fx<any, infer A> ? A : never
 
 // Get the type of capabilities required by Envs
-export type Capabilities<E extends Env<any, any>> = Intersect<CapabilitiesOf<E>>
+type Capabilities<E extends Env<any, any>> = Intersect<CapabilitiesOf<E>>
 type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
 
 // do-notation for effects.
@@ -66,14 +66,15 @@ const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResu
 // Request part of the environment by type
 export const get = <C>() => op<C, C>(resumeNow)
 
+// Subtract CP from CR
 export type Use<CR, CP> =
   CP extends CR ? unknown : CR extends CP ? Omit<CR, keyof CP> : CR
 
 // Satisfy some or all of an Fx's required capabilities.
-export const use = <CR extends CP, CP, R> (fx: Fx<CR, R>, c: CP): Fx<Use<CR, CP>, R> =>
-  op((c0: Use<CR, CP>) => startFx(fx, { ...c0 as any, ...c }))
+export const use = <CR extends CP, CP, R> (fx: Fx<CR, R>, cp: CP): Fx<Use<CR, CP>, R> =>
+  op(c => startFx(fx, { ...c as any, ...cp }))
 
 // Adapt an Fx that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <C0, C1, A>(fx: Fx<C1, A>, f: (c: C0) => C1): Fx<C0, A> =>
-  op((c: C0) => startFx(fx, f(c)))
+  op(c0 => startFx(fx, f(c0)))
