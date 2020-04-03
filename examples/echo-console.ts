@@ -1,6 +1,7 @@
-import { doFx, runFx, Fx, get, pure, resume, Async, async } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
+
+import { Async, async, doFx, Fx, get, pure, resume, runFx } from '../src'
 
 type Print = { print(s: string): Fx<unknown, void> }
 
@@ -8,7 +9,7 @@ type Read = { read: Fx<Async, string> }
 
 const main = doFx(function* () {
   const { print, read } = yield* get<Print & Read>()
-  while(true) {
+  while (true) {
     yield* print('> ')
     const s = yield* read
     yield* print(`${s}${EOL}`)
