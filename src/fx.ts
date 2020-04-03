@@ -42,7 +42,7 @@ export const pure = <A>(a: A): Fx<unknown, A> => ({
 }) as Fx<unknown, A>
 
 // Run an Fx by providing its remaining capability requirements
-export const runFx = <CR, CP extends CR, A>(fx: Fx<CR, A>, c: CP, k: (r: A) => Cancel = () => uncancelable): Cancel =>
+export const runFx = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel =>
   runResume(startFx(fx, c), k)
 
 const startFx = <C, R>(g: Fx<C, R>, c: C): Resume<R> =>
