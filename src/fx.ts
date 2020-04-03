@@ -26,30 +26,23 @@ type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
 // Create an Fx computation from a generator function.
 // Crucially, allows the computation to be started more than once by calling the
 // generator function each time its iterator is requested
-export const doFx = <Y extends Env<any, any>, A extends readonly any[], R>(f: (...args: A) => Generator<Y, R, unknown>): ((...args: A) => Fx<Capabilities<Y>, R>) =>
-  (...args) => ({
-    [Symbol.iterator](): Iterator<Y, R, unknown> { return f(...args) }
-  }) as Fx<Capabilities<Y>, R>
-
-// Extract all possible result types from a set of capabilities
-type Result<C> = { [K in keyof C]: C[K] extends (...a: readonly any[]) => Resume<infer R> ? R : never }[keyof C]
+export const doFx = <Y extends Env<any, any>, R>(f: () => Generator<Y, R, unknown>): Fx<Capabilities<Y>, R> => ({
+  [Symbol.iterator]: f as () => Iterator<Y, R, unknown>
+}) as Fx<Capabilities<Y>, R>
 
 // Create a simple effect operation from an Env
-export const op = <C, A = Result<C>>(env: Env<C, A>): Fx<C, A> => ({
+export const op = <C, A>(env: Env<C, A>): Fx<C, A> => ({
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> { return yield env }
 }) as Fx<C, A>
 
-// Create an Fx that returns A, with no effects
-export const pure = <A>(a: A): Fx<Pure, A> => ({
+// Create an Fx that returns A, with no effects and requires
+// no particular environment
+export const pure = <A>(a: A): Fx<unknown, A> => ({
   *[Symbol.iterator](): Iterator<never, A, A> { return a }
-}) as Fx<Pure, A>
-
-// Run an Fx whose capability requirements have all been satisfied
-export const runFx = <A>(fx: Fx<Pure, A>, k: (r: A) => Cancel = () => uncancelable): Cancel =>
-  runFxWith(fx, {} as Pure, k)
+}) as Fx<unknown, A>
 
 // Run an Fx by providing its remaining capability requirements
-export const runFxWith = <CR, CP extends CR, A>(fx: Fx<CR, A>, c: CP, k: (r: A) => Cancel = () => uncancelable): Cancel =>
+export const runFx = <CR, CP extends CR, A>(fx: Fx<CR, A>, c: CP, k: (r: A) => Cancel = () => uncancelable): Cancel =>
   runResume(startFx(fx, c), k)
 
 const startFx = <C, R>(g: Fx<C, R>, c: C): Resume<R> =>
@@ -73,11 +66,8 @@ const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResu
 // Request part of the environment by type
 export const get = <C>() => op<C, C>(resumeNow)
 
-declare const PURE: unique symbol
-export interface Pure { [PURE]: true }
-
 export type Use<CR, CP> =
-  CP extends CR ? Pure : CR extends CP ? Omit<CR, keyof CP> : CR
+  CP extends CR ? unknown : CR extends CP ? Omit<CR, keyof CP> : CR
 
 // Satisfy some or all of an Fx's required capabilities.
 export const use = <CR extends CP, CP, R> (fx: Fx<CR, R>, c: CP): Fx<Use<CR, CP>, R> =>
@@ -86,4 +76,4 @@ export const use = <CR extends CP, CP, R> (fx: Fx<CR, R>, c: CP): Fx<Use<CR, CP>
 // Adapt an Fx that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <C0, C1, A>(fx: Fx<C1, A>, f: (c: C0) => C1): Fx<C0, A> =>
-  op((c: C0) => startFx(fx, f(c)))// as Fx<C, R>
+  op((c: C0) => startFx(fx, f(c)))

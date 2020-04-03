@@ -1,11 +1,13 @@
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import 'source-map-support/register'
 
-import { Resume, resumeNow, use, resumeLater, runFx, uncancelable } from '../../src'
+import { uncancelable, runFx, resume, Fx, Async, async, pure } from '../../src'
 import { httpImpl } from './src/http'
 import { getAdoptablePetsNear } from './src/pets'
 
 const capabilities = {
+  async: resume,
+
   radiusMiles: Number(process.env.DEFAULT_RADIUS_MILES) || 10,
 
   locationTimeout: Number(process.env.LOCATION_TIMEOUT) || 500,
@@ -20,9 +22,9 @@ const capabilities = {
     client_secret: process.env.PETFINDER_SECRET || ''
   },
 
-  log: (s: string) => resumeNow(console.log(s)),
+  log: (s: string): Fx<unknown, void> => pure(console.log(s)),
 
-  delay: (ms: number): Resume<void> => resumeLater(k => {
+  delay: (ms: number): Fx<Async, void> => async(k => {
     const t = setTimeout(k, ms)
     return () => clearTimeout(t)
   }),
@@ -32,5 +34,5 @@ const capabilities = {
 
 export const handler: APIGatewayProxyHandler = event =>
   new Promise<APIGatewayProxyResult>(resolve => {
-    runFx(use(getAdoptablePetsNear(event), capabilities), a => (resolve(a), uncancelable))
+    runFx(getAdoptablePetsNear(event), capabilities, a => (resolve(a), uncancelable))
   })

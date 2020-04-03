@@ -14,7 +14,7 @@ export type PetfinderAuth = {
 
 export type PetfinderConfig = { petfinderAuth: PetfinderAuth }
 
-export const getPets = doFx(function* (l: GeoLocation, radiusMiles: number) {
+export const getPets = (l: GeoLocation, radiusMiles: number) => doFx(function* () {
   const { petfinderAuth } = yield* get<PetfinderConfig>()
   const token = yield* postJson<PetfinderAuth, PetfinderToken>('https://api.petfinder.com/v2/oauth2/token', petfinderAuth)
 

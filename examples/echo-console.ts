@@ -1,14 +1,13 @@
-import { doFx, resumeLater, resumeNow, Resume, op, runFxWith, Fx } from '../src'
+import { doFx, runFx, Fx, get, pure, resume, Async, async } from '../src'
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-type Print = { print(s: string): Resume<void> }
-const print = (s: string): Fx<Print, void> => op(c => c.print(s))
+type Print = { print(s: string): Fx<unknown, void> }
 
-type Read = { read(): Resume<string> }
-const read: Fx<Read, string> = op(c => c.read())
+type Read = { read: Fx<Async, string> }
 
 const main = doFx(function* () {
+  const { print, read } = yield* get<Print & Read>()
   while(true) {
     yield* print('> ')
     const s = yield* read
@@ -17,18 +16,19 @@ const main = doFx(function* () {
 })
 
 const capabilities = {
-  print: (s: string): Resume<void> =>
-    resumeNow(void process.stdout.write(s)),
+  async: resume,
 
-  read: (): Resume<string> =>
-    resumeLater(k => {
-      const handler = (s: string): void => {
-        readline.close()
-        k(s)
-      }
-      const readline = createInterface({ input: process.stdin }).once('line', handler)
-      return () => readline.removeListener('line', handler).close()
-    })
+  print: (s: string) =>
+    pure(void process.stdout.write(s)),
+
+  read: async<string>(k => {
+    const handler = (s: string): void => {
+      readline.close()
+      k(s)
+    }
+    const readline = createInterface({ input: process.stdin }).once('line', handler)
+    return () => readline.removeListener('line', handler).close()
+  })
 }
 
-runFxWith(main(), capabilities)
+runFx(main, capabilities)
