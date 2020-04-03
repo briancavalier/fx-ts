@@ -1,6 +1,10 @@
-import { Fx, op, runFx, Use, pure } from './fx'
 import { Resume, resume, uncancelable } from './env'
+import { Fx, op, pure, runFx, Use } from './fx'
 
+// ------------------------------------------------------------
+// Fail effect
+// Fail cannot produce a value, and must be eliminated
+// via catchAll or other means before a program can be run
 export type Fail = { fail: (e: Error) => Resume<never> }
 
 export const fail = (e: Error) => op<Fail, never>(c => c.fail(e))

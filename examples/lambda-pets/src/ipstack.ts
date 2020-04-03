@@ -1,4 +1,4 @@
-import { get, doFx } from '../../../src'
+import { doFx, get } from '../../../src'
 import { getJson } from './http'
 import { Location } from './model'
 

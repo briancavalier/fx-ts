@@ -1,11 +1,10 @@
-import { PetfinderAuth, getPets } from './petfinder'
-import { get, doFx, pure, Fx } from '../../../src'
 import { APIGatewayProxyEvent } from 'aws-lambda'
-import { timeout } from '../../../src/async'
+
+import { attempt, catchAll, doFx, Fx, get, pure, timeout } from '../../../src'
 import { getLocation } from './ipstack'
-import { renderPets, renderError } from './render'
-import { attempt, catchAll } from '../../../src/fail'
 import { defaultLocation } from './model'
+import { getPets, PetfinderAuth } from './petfinder'
+import { renderError, renderPets } from './render'
 
 export type Log = { log(s: string): Fx<never, void> }
 

@@ -1,10 +1,13 @@
-import { Resume, Cancel, resume } from './env'
-import { op, Fx, doFx, get, runFx } from './fx'
-import { fail, Fail } from './fail'
 import { AllEffects, AnyResult } from './array'
+import { Cancel, Resume, resume } from './env'
+import { fail, Fail } from './fail'
+import { doFx, Fx, get, op, runFx } from './fx'
 
 export type AsyncTask<A> = (k: (a: A) => Cancel) => Cancel
 
+// ------------------------------------------------------------
+// Async effect
+// Resolves AsyncTask<A> to A
 export type Async = { async<A>(run: AsyncTask<A>): Resume<A> }
 
 export const async = <A>(run: AsyncTask<A>): Fx<Async, A> => op(c => c.async(run))
@@ -16,7 +19,7 @@ export const delay = (ms: number): Fx<Delay & Async, void> => doFx(function* () 
   return yield* delay(ms)
 })
 
-export const timeout = <C, A>(ms: number, c: Fx<C, A>): Fx<Async & Delay & Fail, A> =>
+export const timeout = <C extends Async, A>(ms: number, c: Fx<C, A>): Fx<C & Delay & Fail, A> =>
   race(c, delayFail(ms))
 
 const delayFail = (ms: number): Fx<Delay & Async & Fail, never> => doFx(function* () {

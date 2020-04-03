@@ -1,8 +1,7 @@
-import { doFx, get, Resume, resumeNow, op, Fx, resume, resumeLater, runFx, pure } from '../src'
-import { timeout, Async, async } from '../src/async'
-import { createInterface } from 'readline'
-import { attempt } from '../src/fail'
 import { EOL } from 'os'
+import { createInterface } from 'readline'
+
+import { Async, async, attempt, doFx, Fx, get, pure, resume, runFx, timeout } from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -20,18 +19,18 @@ type RandomInt = { randomInt(min: number, max: number): Fx<unknown, number> }
 // -------------------------------------------------------------------
 // Basic operations that use the capabilites
 
-const println = (s: string) => doFx(function* () {
+const println = (s: string): Fx<Print, void> => doFx(function* () {
   const { print } = yield* get<Print>()
   return yield* print(`${s}${EOL}`)
 })
 
-const ask = (prompt: string) => doFx(function* () {
+const ask = (prompt: string): Fx<Print & Read & Async, string> => doFx(function* () {
   const { print, read } = yield* get<Print & Read>()
   yield* print(prompt)
   return yield* read
 })
 
-const randomInt = (min: number, max: number) => doFx(function* () {
+const randomInt = (min: number, max: number): Fx<RandomInt, number> => doFx(function* () {
   const { randomInt } = yield* get<RandomInt>()
   return yield* randomInt(min, max)
 })

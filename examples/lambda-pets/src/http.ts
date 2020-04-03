@@ -1,8 +1,8 @@
-import { doFx, Fx, Async, get, async } from '../../../src'
-import { fail } from '../../../src/fail'
-import { request as httpsRequest } from 'https'
 import { IncomingMessage, request } from 'http'
+import { request as httpsRequest } from 'https'
 import { parse as parseUrl } from 'url'
+
+import { Async, async, doFx, fail, Fx, get } from '../../../src'
 
 type Request = Get | Post
 type Get = Req & { method: 'GET' }
@@ -16,13 +16,13 @@ type Response =
 
 export type Http = { http(r: Request): Fx<Async, Response> }
 
-export const getJson = <R>(url: string, headers: { [name: string]: string } = {}) => doFx(function*() {
+export const getJson = <R>(url: string, headers: { [name: string]: string } = {}) => doFx(function* () {
   const { http } = yield* get<Http>()
   const result = yield* http({ method: 'GET', url, headers })
   return yield* interpretResponse<R>(url, result)
 })
 
-export const postJson = <A, R> (url: string, a: A, headers: { [name: string]: string } = { }) => doFx(function*() {
+export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}) => doFx(function* () {
   const { http } = yield* get<Http>()
   const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
   return yield* interpretResponse<R>(url, result)
@@ -49,7 +49,7 @@ export const httpImpl = {
         error => k({ type: 'ResponseFailure', response, error })))
       req.on('error', e => console.error('http request error', e))
 
-      if(r.method === 'POST') req.write(r.body)
+      if (r.method === 'POST') req.write(r.body)
 
       req.end()
       return () => req.abort()
