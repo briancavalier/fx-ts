@@ -9,11 +9,8 @@
 ## Features
 
 * **Do-notation for effects**: Write _imperative-looking_ code that's fully referentially transparent
-* **Asychrony with cancelation**:
+* **Asychronous effects with cancelation**: Seamlessly mix synchronous and asynchronous effects without worry
 * **Effect inference**: Effects can be inferred without explicit type annotations
-
-Fx-ts is:
-
 * **Extensible**: Implement new effects in user land
 * **Testable**: Code to interfaces, and easily use different implementations for development, production, and testing
 * **Efficient**: Synchronous and Asynchronous effects run in _constant stack_
