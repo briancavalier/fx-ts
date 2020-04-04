@@ -1,14 +1,12 @@
-import { PetfinderAuth, getPets } from './petfinder'
-import { get, Resume, op, doFx, pure } from '../../../src'
 import { APIGatewayProxyEvent } from 'aws-lambda'
-import { timeout } from '../../../src/timer'
-import { getLocation } from './ipstack'
-import { renderPets, renderError } from './render'
-import { attempt, catchFail } from '../../../src/fail'
-import { defaultLocation } from './model'
 
-export type Log = { log(s: string): Resume<void> }
-export const log = (s: string) => op<Log>(c => c.log(s))
+import { attempt, catchAll, doFx, Fx, get, pure, timeout } from '../../../src'
+import { getLocation } from './ipstack'
+import { defaultLocation } from './model'
+import { getPets, PetfinderAuth } from './petfinder'
+import { renderError, renderPets } from './render'
+
+export type Log = { log(s: string): Fx<never, void> }
 
 export type Config = {
   radiusMiles: number,
@@ -20,18 +18,18 @@ export type Config = {
 
 const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
 
-export const getAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
+export const getAdoptablePetsNear = (event: APIGatewayProxyEvent) => doFx(function* () {
   const p = yield* attempt(tryGetAdoptablePetsNear(event))
   return p instanceof Error
     ? { statusCode: 500, body: renderError(p.message), headers: HEADERS }
     : { statusCode: 200, body: p, headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = doFx(function* (event: APIGatewayProxyEvent) {
-  const { radiusMiles, locationTimeout, petsTimeout } = yield* get<Config>()
+export const tryGetAdoptablePetsNear = (event: APIGatewayProxyEvent) => doFx(function* () {
+  const { radiusMiles, locationTimeout, petsTimeout, log } = yield* get<Config & Log>()
   const host = event.requestContext.identity.sourceIp
 
-  const location = yield* catchFail(timeout(locationTimeout, getLocation(host)), () => pure(defaultLocation))
+  const location = yield* catchAll(timeout(locationTimeout, getLocation(host)), () => pure(defaultLocation))
 
   yield* log(`location for ${host}: ${location.latitude} ${location.longitude}`)
 

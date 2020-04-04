@@ -1,7 +1,7 @@
-import { doFx, get, runFx, Resume, resumeNow, resumeLater, use, op } from '../src'
-import { delay, timeout } from '../src/timer'
+import { EOL } from 'os'
 import { createInterface } from 'readline'
-import { attempt } from '../src/fail'
+
+import { Async, async, attempt, doFx, Fx, get, pure, resume, runFx, timeout } from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -10,21 +10,30 @@ import { attempt } from '../src/fail'
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-type Print = { print(s: string): Resume<void> }
-const print = (s: string) => op<Print>(c => c.print(s))
+type Print = { print(s: string): Fx<unknown, void> }
 
-const println = (s: string) => print(`${s}\n`)
+type Read = { read: Fx<Async, string> }
 
-type Read = { read(): Resume<string> }
-const read = op<Read>(c => c.read())
+type RandomInt = { randomInt(min: number, max: number): Fx<unknown, number> }
 
-const ask = doFx(function* (prompt: string) {
+// -------------------------------------------------------------------
+// Basic operations that use the capabilites
+
+const println = (s: string): Fx<Print, void> => doFx(function* () {
+  const { print } = yield* get<Print>()
+  return yield* print(`${s}${EOL}`)
+})
+
+const ask = (prompt: string): Fx<Print & Read & Async, string> => doFx(function* () {
+  const { print, read } = yield* get<Print & Read>()
   yield* print(prompt)
   return yield* read
 })
 
-type RandomInt = { randomInt(min: number, max: number): Resume<number> }
-const randomInt = (min: number, max: number) => op<RandomInt>(c => c.randomInt(min, max))
+const randomInt = (min: number, max: number): Fx<RandomInt, number> => doFx(function* () {
+  const { randomInt } = yield* get<RandomInt>()
+  return yield* randomInt(min, max)
+})
 
 // -------------------------------------------------------------------
 // The game
@@ -41,7 +50,7 @@ const checkAnswer = (secret: number, guess: number): boolean =>
 
 // Play one round of the game.  Generate a number and ask the user
 // to guess it.
-const play = doFx(function* (name: string, min: number, max: number) {
+const play = (name: string, min: number, max: number) => doFx(function* () {
   const secret = yield* randomInt(min, max)
   const result =
     yield* attempt(timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `)))
@@ -61,7 +70,7 @@ const play = doFx(function* (name: string, min: number, max: number) {
 
 // Ask the user if they want to play again.
 // Note that we keep asking until the user gives an answer we recognize
-const checkContinue = doFx(function* (name: string) {
+const checkContinue = (name: string) => doFx(function* () {
   while (true) {
     const answer = yield* ask(`Do you want to continue, ${name}? (y or n) `)
 
@@ -76,7 +85,6 @@ const checkContinue = doFx(function* (name: string) {
 const main = doFx(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
-  yield* delay(1000)
 
   const { min, max } = yield* get<GameConfig>()
 
@@ -95,27 +103,27 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  delay: (ms: number): Resume<void> =>
-    resumeLater(k => {
-      const t = setTimeout(k, ms)
-      return () => clearTimeout(t)
-    }),
+  async: resume,
 
-  print: (s: string): Resume<void> =>
-    resumeNow(void process.stdout.write(s)),
+  delay: (ms: number): Fx<Async, void> => async(k => {
+    const t = setTimeout(k, ms)
+    return () => clearTimeout(t)
+  }),
 
-  read: (): Resume<string> =>
-    resumeLater(k => {
-      const readline = createInterface({ input: process.stdin })
-        .once('line', s => {
-          readline.close()
-          k(s)
-        })
-      return () => readline.removeListener('line', k).close()
-    }),
+  print: (s: string): Fx<unknown, void> =>
+    pure(void process.stdout.write(s)),
 
-  randomInt: (min: number, max: number): Resume<number> =>
-    resumeNow(Math.floor(min + (Math.random() * (max - min))))
+  read: async<string>(k => {
+    const readline = createInterface({ input: process.stdin })
+      .once('line', s => {
+        readline.close()
+        k(s)
+      })
+    return () => readline.removeListener('line', k).close()
+  }),
+
+  randomInt: (min: number, max: number): Fx<unknown, number> =>
+    pure(Math.floor(min + (Math.random() * (max - min))))
 }
 
-runFx(use(main(), capabilities))
+runFx(main, capabilities)

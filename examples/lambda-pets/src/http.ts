@@ -1,8 +1,8 @@
-import { resumeLater, Resume, op, doFx } from '../../../src'
-import { fail } from '../../../src/fail'
-import { request as httpsRequest } from 'https'
 import { IncomingMessage, request } from 'http'
+import { request as httpsRequest } from 'https'
 import { parse as parseUrl } from 'url'
+
+import { Async, async, doFx, fail, Fx, get } from '../../../src'
 
 type Request = Get | Post
 type Get = Req & { method: 'GET' }
@@ -14,20 +14,21 @@ type Response =
   | { type: 'ResponseFailure', response: IncomingMessage, error: Error }
   | { type: 'RequestFailure', error: Error }
 
-export type Http = { http(r: Request): Resume<Response> }
-export const http = (r: Request) => op<Http>(c => c.http(r))
+export type Http = { http(r: Request): Fx<Async, Response> }
 
-export const getJson = doFx(function*<R>(url: string, headers: { [name: string]: string } = {}) {
+export const getJson = <R>(url: string, headers: { [name: string]: string } = {}) => doFx(function* () {
+  const { http } = yield* get<Http>()
   const result = yield* http({ method: 'GET', url, headers })
   return yield* interpretResponse<R>(url, result)
 })
 
-export const postJson = doFx(function*<A, R>(url: string, a: A, headers: { [name: string]: string } = {}) {
+export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}) => doFx(function* () {
+  const { http } = yield* get<Http>()
   const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
   return yield* interpretResponse<R>(url, result)
 })
 
-const interpretResponse = doFx(function* <R>(url: string, result: Response) {
+const interpretResponse = <R>(url: string, result: Response) => doFx(function* () {
   return result.type === 'Response' && result.response.statusCode === 200
     ? JSON.parse(result.body) as R
     : yield* fail(interpretFailure(url, result))
@@ -39,8 +40,8 @@ const interpretFailure = (url: string, result: Response): Error =>
     : result.error
 
 export const httpImpl = {
-  http: (r: Request): Resume<Response> =>
-    resumeLater(k => {
+  http: (r: Request): Fx<Async, Response> =>
+    async(k => {
       const options = { method: r.method, ...parseUrl(r.url), headers: r.headers }
       const req = options.protocol === 'https:' ? httpsRequest(options) : request(options)
       req.on('response', response => readResponse(response).then(
@@ -48,7 +49,7 @@ export const httpImpl = {
         error => k({ type: 'ResponseFailure', response, error })))
       req.on('error', e => console.error('http request error', e))
 
-      if(r.method === 'POST') req.write(r.body)
+      if (r.method === 'POST') req.write(r.body)
 
       req.end()
       return () => req.abort()
