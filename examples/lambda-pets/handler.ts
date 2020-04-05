@@ -1,9 +1,12 @@
-import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import 'source-map-support/register'
 
-import { uncancelable, runFx, resume, Fx, Async, async, pure } from '../../src'
-import { httpImpl } from './src/http'
-import { getAdoptablePetsNear } from './src/pets'
+import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
+
+import { Async, async, Fx, pure, resume, runFx, uncancelable } from '../../src'
+import { getAdoptablePetsNear } from './src/application/pets'
+import { httpImpl } from './src/infrastructure/http'
+import { getLocation } from './src/infrastructure/ipstack'
+import { getPets } from './src/infrastructure/petfinder'
 
 const capabilities = {
   async: resume,
@@ -18,7 +21,7 @@ const capabilities = {
 
   petfinderAuth: {
     grant_type: 'client_credentials' as const,
-    client_id: process.env.PETFINDER_ID || '',
+    client_id: process.env.PETFINDER_IsD || '',
     client_secret: process.env.PETFINDER_SECRET || ''
   },
 
@@ -28,6 +31,10 @@ const capabilities = {
     const t = setTimeout(k, ms)
     return () => clearTimeout(t)
   }),
+
+  getLocation,
+
+  getPets,
 
   ...httpImpl
 }

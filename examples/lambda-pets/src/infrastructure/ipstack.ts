@@ -1,6 +1,6 @@
-import { doFx, get } from '../../../src'
+import { doFx, get } from '../../../../src'
+import { Location } from '../domain/model'
 import { getJson } from './http'
-import { Location } from './model'
 
 export type IpStackConfig = { ipstackKey: string }
 

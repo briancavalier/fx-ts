@@ -1,3 +1,5 @@
+import { Fx } from '../../../../src'
+
 // Domain model
 export type GeoLocation = {
   longitude: number,
@@ -27,3 +29,7 @@ export const defaultLocation: Location = {
   longitude: -79.995888,
   city: 'Pittsburgh'
 }
+
+export type GetPets<C> = { getPets(l: GeoLocation, radiusMiles: number): Fx<C, Pets> }
+
+export type GetLocation<C> = { getLocation(host: string): Fx<C, Location> }

@@ -1,6 +1,6 @@
-import { doFx, get } from '../../../src'
+import { doFx, get } from '../../../../src'
+import { GeoLocation, Pets } from '../domain/model'
 import { getJson, postJson } from './http'
-import { GeoLocation, Pets } from './model'
 
 export type PetfinderToken = {
   access_token: string

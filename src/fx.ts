@@ -1,4 +1,4 @@
-import { Env, resumeNow, Resume, runResume, resume, Cancel, uncancelable, Intersect } from './env'
+import { Cancel, Env, Intersect, Resume, resume, resumeNow, runResume, uncancelable } from './env'
 
 // Fx represents an effectful computation
 // It's a sequence of effects, each of which requires a set of capabilities.
@@ -8,7 +8,7 @@ import { Env, resumeNow, Resume, runResume, resume, Cancel, uncancelable, Inters
 // over its effects.  This makes it quite natural to implement effectful
 // computations by writing a generator function that yields effects.
 // Pure code simply executes between the yields.
-export interface Fx<C, A> extends FxIterable<Env<C, unknown>, A> {}
+export interface Fx<C, A> extends FxIterable<Env<C, unknown>, A> { }
 
 export interface FxIterable<Y, R> {
   'fx-ts/Fx': never
@@ -54,12 +54,10 @@ const startFx = <C, R>(g: Fx<C, R>, c: C): Resume<R> =>
 // Process synchronous and asynchronous effects in constant stack
 const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResult<Env<C, unknown>, R>, c: C, k: (r: R) => Cancel): Cancel => {
   while (true) {
-    if (ir.done) return k(ir.value)
-
+    if (ir.done === true) return k(ir.value)
     const r = ir.value(c)
-    if (!r.now) return r.run(n => stepFx(i, i.next(n), c, k))
-
-    ir = i.next(r.value)
+    if (r.now === false) return r.run(n => stepFx(i, i.next(n), c, k))
+    else ir = i.next(r.value)
   }
 }
 
@@ -71,7 +69,7 @@ export type Use<CR, CP> =
   CP extends CR ? unknown : CR extends CP ? Omit<CR, keyof CP> : CR
 
 // Satisfy some or all of an Fx's required capabilities.
-export const use = <CR extends CP, CP, R> (fx: Fx<CR, R>, cp: CP): Fx<Use<CR, CP>, R> =>
+export const use = <CR extends CP, CP, R>(fx: Fx<CR, R>, cp: CP): Fx<Use<CR, CP>, R> =>
   op(c => startFx(fx, { ...c as any, ...cp }))
 
 // Adapt an Fx that requires one set of capabilities to
