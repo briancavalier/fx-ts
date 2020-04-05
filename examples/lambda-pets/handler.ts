@@ -39,7 +39,10 @@ const capabilities = {
   ...httpImpl
 }
 
+type Effects<F> = F extends (...a: any[]) => Fx<infer C, any> ? C : 'hi'
+
 export const handler: APIGatewayProxyHandler = event =>
   new Promise<APIGatewayProxyResult>(resolve => {
-    runFx(getAdoptablePetsNear(event), capabilities, a => (resolve(a), uncancelable))
+    const r = getAdoptablePetsNear<Effects<typeof getLocation>, Effects<typeof getPets>>(event.requestContext.identity.sourceIp)
+    runFx(r, capabilities, a => (resolve(a), uncancelable))
   })

@@ -20,23 +20,19 @@ export type AdoptablePetsNear = {
 
 const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
 
-export const getAdoptablePetsNear = <C>(event: APIGatewayProxyEvent) => doFx(function* () {
-  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<C>(event))
+export const getAdoptablePetsNear = <C1, C2>(ip: string) => doFx(function* () {
+  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<C1, C2>(ip))
   return petsOrError instanceof Error
     ? { statusCode: 500, body: renderError(petsOrError), headers: HEADERS }
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = <C>(event: APIGatewayProxyEvent) => doFx(function* () {
-  const { radiusMiles, locationTimeout, petsTimeout, log } = yield* get<Config & Log>()
-  const { getLocation } = yield* get<GetLocation<C>>()
-  const { getPets } = yield* get<GetPets<C>>()
+export const tryGetAdoptablePetsNear = <C1, C2>(ip: string) => doFx(function* () {
+  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & GetLocation<C1> & GetPets<C2>>()
 
-  const host = event.requestContext.identity.sourceIp
+  const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
-  const location = yield* catchAll(timeout(locationTimeout, getLocation(host)), () => pure(defaultLocation))
-
-  yield* log(`location for ${host}: ${location.latitude} ${location.longitude}`)
+  yield* log(`location for ${ip}: ${location.latitude} ${location.longitude}`)
 
   const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
