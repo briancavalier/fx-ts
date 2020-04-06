@@ -10,18 +10,18 @@ export type Location = GeoLocation & {
   city?: string
 }
 
-export type Pets = {
-  animals: readonly Pet[]
+export type AdoptablePetsNear = {
+  location: Location,
+  radiusMiles: number,
+  pets: Pets
 }
+
+export type Pets = readonly Pet[]
 
 export type Pet = {
   name: string,
   url: string,
-  photos: readonly Photo[]
-}
-
-export type Photo = {
-  medium: string
+  photoUrl?: string
 }
 
 export const defaultLocation: Location = {

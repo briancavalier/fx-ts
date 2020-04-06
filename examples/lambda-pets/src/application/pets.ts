@@ -1,7 +1,5 @@
-import { APIGatewayProxyEvent } from 'aws-lambda'
-
 import { attempt, catchAll, doFx, Fx, get, pure, timeout } from '../../../../src'
-import { defaultLocation, GetLocation, GetPets, Location, Pets } from '../domain/model'
+import { defaultLocation, GetLocation, GetPets } from '../domain/model'
 import { renderError, renderPets } from './render'
 
 export type Log = { log(s: string): Fx<unknown, void> }
@@ -12,23 +10,17 @@ export type Config = {
   petsTimeout: number
 }
 
-export type AdoptablePetsNear = {
-  location: Location,
-  radiusMiles: number,
-  pets: Pets
-}
-
 const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
 
-export const getAdoptablePetsNear = <C1, C2>(ip: string) => doFx(function* () {
-  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<C1, C2>(ip))
+export const getAdoptablePetsNear = <C>(ip: string) => doFx(function* () {
+  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<C>(ip))
   return petsOrError instanceof Error
     ? { statusCode: 500, body: renderError(petsOrError), headers: HEADERS }
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = <C1, C2>(ip: string) => doFx(function* () {
-  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & GetLocation<C1> & GetPets<C2>>()
+export const tryGetAdoptablePetsNear = <C>(ip: string) => doFx(function* () {
+  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & GetLocation<C> & GetPets<C>>()
 
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
@@ -36,7 +28,7 @@ export const tryGetAdoptablePetsNear = <C1, C2>(ip: string) => doFx(function* ()
 
   const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
-  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.animals.length}`)
+  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.length}`)
 
   return { location, radiusMiles, pets }
 })

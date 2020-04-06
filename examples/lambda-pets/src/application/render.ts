@@ -1,4 +1,4 @@
-import { AdoptablePetsNear } from './pets'
+import { AdoptablePetsNear } from '../domain/model'
 
 export const renderError = (e: Error): string => wrapHtml(`
   <h1>Darn! We couldn't find adoptable pets for you</h1>
@@ -6,9 +6,9 @@ export const renderError = (e: Error): string => wrapHtml(`
 `)
 
 export const renderPets = ({ location, radiusMiles, pets }: AdoptablePetsNear): string => wrapHtml(`
-  <h1>${pets.animals.length === 0 ? 'No adoptable' : 'Adoptable'} pets within ${radiusMiles} miles of ${location.city}</h1>
-  <p>${pets.animals.filter(a => !!a.photos.length).map(a =>
-  `<a href="${a.url}"><img src="${a.photos[0]?.medium}" alt="${a.name}"></a>`).join('')}
+  <h1>${pets.length === 0 ? 'No adoptable' : 'Adoptable'} pets within ${radiusMiles} miles of ${location.city}</h1>
+  <p>${pets.filter(p => !!p.photoUrl).map(a =>
+  `<a href="${a.url}"><img src="${a.photoUrl}" alt="${a.name}"></a>`).join('')}
   </p>
 `)
 

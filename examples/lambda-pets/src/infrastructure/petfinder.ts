@@ -1,6 +1,20 @@
-import { doFx, get } from '../../../../src'
+import { doFx, Fx, get } from '../../../../src'
 import { GeoLocation, Pets } from '../domain/model'
-import { getJson, postJson } from './http'
+import { getJson, HttpEnv, postJson } from './http'
+
+export type PetfinderPets = {
+  animals: readonly Animal[]
+}
+
+export type Animal = {
+  name: string,
+  url: string,
+  photos: readonly Photo[]
+}
+
+export type Photo = {
+  medium: string
+}
 
 export type PetfinderToken = {
   access_token: string
@@ -14,11 +28,17 @@ export type PetfinderAuth = {
 
 export type PetfinderConfig = { petfinderAuth: PetfinderAuth }
 
-export const getPets = (l: GeoLocation, radiusMiles: number) => doFx(function* () {
+export const getPets = (l: GeoLocation, radiusMiles: number): Fx<HttpEnv & PetfinderConfig, Pets> => doFx(function* () {
   const { petfinderAuth } = yield* get<PetfinderConfig>()
   const token = yield* postJson<PetfinderAuth, PetfinderToken>('https://api.petfinder.com/v2/oauth2/token', petfinderAuth)
 
-  return yield* getJson<Pets>(`https://api.petfinder.com/v2/animals?location=${l.latitude},${l.longitude}&distance=${Math.ceil(radiusMiles)}`, {
+  const { animals } = yield* getJson<PetfinderPets>(`https://api.petfinder.com/v2/animals?location=${l.latitude},${l.longitude}&distance=${Math.ceil(radiusMiles)}`, {
     Authorization: `Bearer ${token.access_token}`
   })
+
+  return animals.map(a => ({
+    name: a.name,
+    url: a.url,
+    photoUrl: a.photos[0]?.medium
+  }))
 })

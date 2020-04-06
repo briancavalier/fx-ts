@@ -1,5 +1,5 @@
-import { Fx, Effects, Return, op, runFx } from './fx'
-import { resume, uncancelable, Intersect } from './env'
+import { Intersect, resume, uncancelable } from './env'
+import { Effects, Fx, op, Return, runFx } from './fx'
 
 export type AllEffects<C extends readonly Fx<any, any>[]> = Effects<Intersect<C[number]>>
 
