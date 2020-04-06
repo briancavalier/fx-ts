@@ -28,4 +28,4 @@ export const resumeLater = <A>(run: (k: (a: A) => void) => Cancel): Resume<A> =>
   })
 
 export const runResume = <A>(ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
-  ra.now === true ? k(ra.value) : ra.run(k)
+  ra.now ? k(ra.value) : ra.run(k)

@@ -54,10 +54,12 @@ const startFx = <C, R>(g: Fx<C, R>, c: C): Resume<R> =>
 // Process synchronous and asynchronous effects in constant stack
 const stepFx = <C, R>(i: Iterator<Env<C, unknown>, R, unknown>, ir: IteratorResult<Env<C, unknown>, R>, c: C, k: (r: R) => Cancel): Cancel => {
   while (true) {
-    if (ir.done === true) return k(ir.value)
+    if (ir.done) return k(ir.value)
+
     const r = ir.value(c)
-    if (r.now === false) return r.run(n => stepFx(i, i.next(n), c, k))
-    else ir = i.next(r.value)
+    if (!r.now) return r.run(n => stepFx(i, i.next(n), c, k))
+
+    ir = i.next(r.value)
   }
 }
 
