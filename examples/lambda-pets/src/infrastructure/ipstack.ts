@@ -1,10 +1,17 @@
 import { doFx, fail, get } from '../../../../src'
-import { Location } from '../domain/model'
-import { getJson } from './http'
+import { GetLocation, Location } from '../domain/model'
+import { getJson, HttpEnv } from './http'
 
-export type IpStackConfig = { ipstackKey: string }
+// ipstack types and API
+// Note that getLocation is a concrete implementation of
+// the GetLocation domain interface and instantiates the specific
+// set of effects that it requires.
 
-export const getLocation = (host: string) => doFx(function* () {
+export type IpStackConfig = {
+  ipstackKey: string
+}
+
+export const getLocation: GetLocation<HttpEnv & IpStackConfig> = (host: string) => doFx(function* () {
   const { ipstackKey } = yield* get<IpStackConfig>()
   const location = yield* getJson<Partial<Location>>(`http://api.ipstack.com/${host}?hostname=1&access_key=${ipstackKey}`)
   if (location.latitude == null || location.longitude == null) return yield* fail(new Error('Invalid location'))

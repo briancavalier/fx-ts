@@ -1,27 +1,28 @@
 import { Fx } from '../../../../src'
 
 // Domain model
-export type GeoLocation = {
-  longitude: number,
-  latitude: number
-}
-
-export type Location = GeoLocation & {
-  city?: string
-}
 
 export type AdoptablePetsNear = {
-  location: Location,
-  radiusMiles: number,
-  pets: Pets
+  readonly location: Location,
+  readonly radiusMiles: number,
+  readonly pets: Pets
 }
 
 export type Pets = readonly Pet[]
 
 export type Pet = {
-  name: string,
-  url: string,
-  photoUrl?: string
+  readonly name: string,
+  readonly url: string,
+  readonly photoUrl?: string
+}
+
+export type GeoLocation = {
+  readonly longitude: number,
+  readonly latitude: number
+}
+
+export type Location = GeoLocation & {
+  readonly city?: string
 }
 
 export const defaultLocation: Location = {
@@ -30,6 +31,14 @@ export const defaultLocation: Location = {
   city: 'Pittsburgh'
 }
 
-export type GetPets<C> = { getPets(l: GeoLocation, radiusMiles: number): Fx<C, Pets> }
+// Domain model access interfaces.
+// These are implemented by infrastructure
 
-export type GetLocation<C> = { getLocation(host: string): Fx<C, Location> }
+export type GetPets<Effects> = (l: GeoLocation, radiusMiles: number) => Fx<Effects, Pets>
+
+export type GetLocation<Effects> = (host: string) => Fx<Effects, Location>
+
+export type PetsEnv<Effects> = {
+  getPets: GetPets<Effects>,
+  getLocation: GetLocation<Effects>
+}

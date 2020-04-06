@@ -1,5 +1,5 @@
 import { attempt, catchAll, doFx, Fx, get, pure, timeout } from '../../../../src'
-import { defaultLocation, GetLocation, GetPets } from '../domain/model'
+import { defaultLocation, PetsEnv } from '../domain/model'
 import { renderError, renderPets } from './render'
 
 export type Log = { log(s: string): Fx<unknown, void> }
@@ -12,15 +12,15 @@ export type Config = {
 
 const HEADERS = { 'Content-Type': 'text/html;charset=utf-8' }
 
-export const getAdoptablePetsNear = <C>(ip: string) => doFx(function* () {
-  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<C>(ip))
+export const getAdoptablePetsNear = <Effects>(ip: string) => doFx(function* () {
+  const petsOrError = yield* attempt(tryGetAdoptablePetsNear<Effects>(ip))
   return petsOrError instanceof Error
     ? { statusCode: 500, body: renderError(petsOrError), headers: HEADERS }
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = <C>(ip: string) => doFx(function* () {
-  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & GetLocation<C> & GetPets<C>>()
+export const tryGetAdoptablePetsNear = <Effects>(ip: string) => doFx(function* () {
+  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & PetsEnv<Effects>>()
 
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
