@@ -10,6 +10,9 @@ import { Cancel, Env, Intersect, Resume, resume, resumeNow, runResume, uncancela
 // Pure code simply executes between the yields.
 export interface Fx<C, A> extends FxIterable<Env<C, unknown>, A> { }
 
+// An Fx that requires no particular capabilities and produces no effects
+export interface Pure<A> extends Fx<unknown, A> { }
+
 export interface FxIterable<Y, R> {
   'fx-ts/Fx': never
   [Symbol.iterator](): Iterator<Y, R, unknown>
@@ -37,9 +40,9 @@ export const op = <C, A>(env: Env<C, A>): Fx<C, A> => ({
 
 // Create an Fx that returns A, with no effects and requires
 // no particular environment
-export const pure = <A>(a: A): Fx<unknown, A> => ({
+export const pure = <A>(a: A): Pure<A> => ({
   *[Symbol.iterator](): Iterator<never, A, A> { return a }
-}) as Fx<unknown, A>
+}) as Pure<A>
 
 // Run an Fx by providing its remaining capability requirements
 export const runFx = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel =>

@@ -37,8 +37,3 @@ export const defaultLocation: Location = {
 export type GetPets<Effects> = (l: GeoLocation, radiusMiles: number) => Fx<Effects, Pets>
 
 export type GetLocation<Effects> = (host: string) => Fx<Effects, Location>
-
-export type PetsEnv<Effects> = {
-  getPets: GetPets<Effects>,
-  getLocation: GetLocation<Effects>
-}

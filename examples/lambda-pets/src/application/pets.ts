@@ -1,10 +1,14 @@
 import { attempt, catchAll, doFx, Fx, get, pure, timeout } from '../../../../src'
-import { defaultLocation, PetsEnv } from '../domain/model'
+import { defaultLocation, GetLocation, GetPets } from '../domain/model'
 import { renderError, renderPets } from './render'
 
-export type Log = { log(s: string): Fx<unknown, void> }
+export type Log<Effects> = (s: string) => Fx<Effects, void>
 
-export type Config = {
+export type PetsEnv<Effects> = {
+  getPets: GetPets<Effects>,
+  getLocation: GetLocation<Effects>
+  log: Log<Effects>
+
   radiusMiles: number,
   locationTimeout: number,
   petsTimeout: number
@@ -20,15 +24,15 @@ export const getAdoptablePetsNear = <Effects>(ip: string) => doFx(function* () {
 })
 
 export const tryGetAdoptablePetsNear = <Effects>(ip: string) => doFx(function* () {
-  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<Config & Log & PetsEnv<Effects>>()
+  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<PetsEnv<Effects>>()
 
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
-  yield* log(`location for ${ip}: ${location.latitude} ${location.longitude}`)
+  yield* log(`Geo location for ${ip}: ${location.latitude} ${location.longitude}`)
 
   const pets = yield* timeout(petsTimeout, getPets(location, radiusMiles))
 
-  yield* log(`pets within ${radiusMiles} of ${location.latitude} ${location.longitude}: ${pets.length}`)
+  yield* log(`Pets within ${radiusMiles} mi of ${location.latitude} ${location.longitude}: ${pets.length}`)
 
   return { location, radiusMiles, pets }
 })
