@@ -35,4 +35,4 @@ export const env = {
 }
 
 export type EffectsOf<F extends (...a: any[]) => any> = Effects<ReturnType<F>>
-export type EnvEffects = EffectsOf<typeof getPets> & EffectsOf<typeof getLocation> & Effects<typeof env['log']>
+export type EnvEffects = EffectsOf<typeof getPets> & EffectsOf<typeof getLocation> & EffectsOf<typeof env['log']>
