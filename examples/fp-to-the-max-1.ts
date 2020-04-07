@@ -1,7 +1,9 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, attempt, doFx, Fx, get, Pure, pure, resume, runFx, timeout } from '../src'
+import {
+  Async, async, attempt, defaultAsync, doFx, Fx, get, Pure, pure, runFx, timeout
+} from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -14,7 +16,7 @@ type Print = { print(s: string): Pure<void> }
 
 type Read = { read: Fx<Async, string> }
 
-type RandomInt = { randomInt(min: number, max: number): Fx<unknown, number> }
+type RandomInt = { randomInt(min: number, max: number): Pure<number> }
 
 // -------------------------------------------------------------------
 // Basic operations that use the capabilites
@@ -103,12 +105,7 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  async: resume,
-
-  delay: (ms: number): Fx<Async, void> => async(k => {
-    const t = setTimeout(k, ms)
-    return () => clearTimeout(t)
-  }),
+  ...defaultAsync,
 
   print: (s: string): Pure<void> =>
     pure(void process.stdout.write(s)),
@@ -122,7 +119,7 @@ const capabilities = {
     return () => readline.removeListener('line', k).close()
   }),
 
-  randomInt: (min: number, max: number): Fx<unknown, number> =>
+  randomInt: (min: number, max: number): Pure<number> =>
     pure(Math.floor(min + (Math.random() * (max - min))))
 }
 

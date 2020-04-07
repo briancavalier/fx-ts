@@ -12,6 +12,15 @@ export type Async = { async<A>(run: AsyncTask<A>): Resume<A> }
 
 export const async = <A>(run: AsyncTask<A>): Fx<Async, A> => op(c => c.async(run))
 
+export const defaultAsync: Async & Delay = {
+  async: resume,
+  delay: (ms: number): Fx<Async, void> =>
+    async<void>(k => {
+      const t = setTimeout(k, ms)
+      return () => clearTimeout(t)
+    })
+}
+
 export type Delay = { delay(ms: number): Fx<Async, void> }
 
 export const delay = (ms: number): Fx<Delay & Async, void> => doFx(function* () {

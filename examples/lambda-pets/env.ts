@@ -1,10 +1,11 @@
-import { Async, async, Fx, Pure, pure, resume } from '../../src'
+import { defaultAsync, Pure, pure } from '../../src'
 import { httpImpl } from './src/infrastructure/http'
 import { getLocation } from './src/infrastructure/ipstack'
 import { getPets } from './src/infrastructure/petfinder'
 
 export const env = {
-  async: resume,
+  ...defaultAsync,
+  ...httpImpl,
 
   radiusMiles: Number(process.env.DEFAULT_RADIUS_MILES) || 10,
 
@@ -22,14 +23,7 @@ export const env = {
 
   log: (s: string): Pure<void> => pure(console.log(Date.now(), s)),
 
-  delay: (ms: number): Fx<Async, void> => async(k => {
-    const t = setTimeout(k, ms)
-    return () => clearTimeout(t)
-  }),
-
   getLocation,
 
-  getPets,
-
-  ...httpImpl
+  getPets
 }
