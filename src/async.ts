@@ -12,7 +12,7 @@ export type Async = { async<A>(run: AsyncTask<A>): Resume<A> }
 
 export const async = <A>(run: AsyncTask<A>): Fx<Async, A> => op(c => c.async(run))
 
-export const defaultAsync: Async & Delay = {
+export const defaultAsyncEnv: Async & Delay = {
   async: resume,
   delay: (ms: number): Fx<Async, void> =>
     async<void>(k => {

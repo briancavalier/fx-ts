@@ -1,11 +1,11 @@
-import { defaultAsync, Pure, pure } from '../../src'
-import { httpImpl } from './src/infrastructure/http'
+import { defaultAsyncEnv, Pure, pure } from '../../src'
+import { httpEnv } from './src/infrastructure/http'
 import { getLocation } from './src/infrastructure/ipstack'
 import { getPets } from './src/infrastructure/petfinder'
 
 export const env = {
-  ...defaultAsync,
-  ...httpImpl,
+  ...defaultAsyncEnv,
+  ...httpEnv,
 
   radiusMiles: Number(process.env.DEFAULT_RADIUS_MILES) || 10,
 

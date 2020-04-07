@@ -1,7 +1,7 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, defaultAsync, doFx, Fx, get, Pure, pure, resume, runFx } from '../src'
+import { Async, async, defaultAsyncEnv, doFx, Fx, get, Pure, pure, runFx } from '../src'
 
 type Print = { print(s: string): Pure<void> }
 
@@ -17,7 +17,7 @@ const main = doFx(function* () {
 })
 
 const capabilities = {
-  ...defaultAsync,
+  ...defaultAsyncEnv,
 
   print: (s: string): Pure<void> =>
     pure(void process.stdout.write(s)),

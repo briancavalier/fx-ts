@@ -2,7 +2,7 @@ import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 import {
-  Async, async, attempt, defaultAsync, doFx, Fx, get, Pure, pure, runFx, timeout
+  Async, async, attempt, defaultAsyncEnv, doFx, Fx, get, Pure, pure, runFx, timeout
 } from '../src'
 
 // -------------------------------------------------------------------
@@ -105,7 +105,7 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  ...defaultAsync,
+  ...defaultAsyncEnv,
 
   print: (s: string): Pure<void> =>
     pure(void process.stdout.write(s)),
