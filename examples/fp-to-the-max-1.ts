@@ -1,7 +1,7 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, attempt, doFx, Fx, get, pure, resume, runFx, timeout } from '../src'
+import { Async, async, attempt, doFx, Fx, get, Pure, pure, resume, runFx, timeout } from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -10,7 +10,7 @@ import { Async, async, attempt, doFx, Fx, get, pure, resume, runFx, timeout } fr
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-type Print = { print(s: string): Fx<unknown, void> }
+type Print = { print(s: string): Pure<void> }
 
 type Read = { read: Fx<Async, string> }
 
@@ -110,7 +110,7 @@ const capabilities = {
     return () => clearTimeout(t)
   }),
 
-  print: (s: string): Fx<unknown, void> =>
+  print: (s: string): Pure<void> =>
     pure(void process.stdout.write(s)),
 
   read: async<string>(k => {

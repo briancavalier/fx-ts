@@ -12,7 +12,7 @@ export type Resume<A> =
 
 export type Cancel = () => void
 
-export const uncancelable = () => {}
+export const uncancelable = () => { }
 
 export const resumeNow = <A>(value: A): Resume<A> =>
   ({ now: true, value })
@@ -20,12 +20,12 @@ export const resumeNow = <A>(value: A): Resume<A> =>
 export const resume = <A>(run: (k: (a: A) => Cancel) => Cancel): Resume<A> =>
   ({ now: false, run })
 
-export const resumeLater = <A> (run: (k: (a: A) => void) => Cancel): Resume<A> =>
+export const resumeLater = <A>(run: (k: (a: A) => void) => Cancel): Resume<A> =>
   resume(k => {
     let cancel = uncancelable
     cancel = run(a => (cancel = k(a)))
     return () => cancel()
   })
 
-export const runResume = <A> (ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
+export const runResume = <A>(ra: Resume<A>, k: (a: A) => Cancel): Cancel =>
   ra.now ? k(ra.value) : ra.run(k)
