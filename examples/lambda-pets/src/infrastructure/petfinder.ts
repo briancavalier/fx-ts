@@ -1,4 +1,4 @@
-import { doFx, Fx, get } from '../../../../src'
+import { doFx, Fx } from '../../../../src'
 import { GeoLocation, GetPets, Pets } from '../domain/model'
 import { getJson, HttpEnv, postJson } from './http'
 
@@ -35,8 +35,7 @@ export type PetfinderConfig = {
   petfinderAuth: PetfinderAuth
 }
 
-export const getPets: GetPets<HttpEnv & PetfinderConfig> = (l: GeoLocation, radiusMiles: number): Fx<HttpEnv & PetfinderConfig, Pets> => doFx(function* () {
-  const { petfinderAuth } = yield* get<PetfinderConfig>()
+export const getPets: GetPets<HttpEnv & PetfinderConfig> = (l: GeoLocation, radiusMiles: number): Fx<HttpEnv & PetfinderConfig, Pets> => doFx(function* ({ petfinderAuth }: PetfinderConfig) {
   const token = yield* postJson<PetfinderAuth, PetfinderToken>('https://api.petfinder.com/v2/oauth2/token', petfinderAuth)
 
   const { animals } = yield* getJson<PetfinderPets>(`https://api.petfinder.com/v2/animals?location=${l.latitude},${l.longitude}&distance=${Math.ceil(radiusMiles)}`, {

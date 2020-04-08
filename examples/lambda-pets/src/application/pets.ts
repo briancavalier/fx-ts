@@ -1,4 +1,4 @@
-import { attempt, catchAll, doFx, Fx, get, None, pure, timeout } from '../../../../src'
+import { attempt, catchAll, doFx, Fx, None, pure, timeout } from '../../../../src'
 import { defaultLocation } from '../domain/model'
 import { getLocation } from '../infrastructure/ipstack'
 import { getPets } from '../infrastructure/petfinder'
@@ -23,9 +23,7 @@ export const getAdoptablePetsNear = (ip: string) => doFx(function* () {
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = (ip: string) => doFx(function* () {
-  const { radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets } = yield* get<PetsEnv>()
-
+export const tryGetAdoptablePetsNear = (ip: string) => doFx(function* ({ radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets }: PetsEnv) {
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
   yield* log(`Geo location for ${ip}: ${location.latitude} ${location.longitude}`)
