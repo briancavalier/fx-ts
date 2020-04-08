@@ -45,7 +45,7 @@ const interpretFailure = (url: string, result: Response): Error =>
     ? new Error(`Request failed ${result.response.statusCode}: ${url} ${result.body}`)
     : result.error
 
-export const httpImpl: Http<Async, Request, Response> = {
+export const httpEnv: Http<Async, Request, Response> = {
   http: (r: Request): Fx<Async, Response> =>
     async(k => {
       const options = { method: r.method, ...parseUrl(r.url), headers: r.headers }

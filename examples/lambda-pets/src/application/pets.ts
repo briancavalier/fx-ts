@@ -1,4 +1,4 @@
-import { attempt, catchAll, doFx, get, pure, Pure, timeout } from '../../../../src'
+import { attempt, catchAll, doFx, Fx, get, None, pure, timeout } from '../../../../src'
 import { defaultLocation } from '../domain/model'
 import { getLocation } from '../infrastructure/ipstack'
 import { getPets } from '../infrastructure/petfinder'
@@ -7,7 +7,7 @@ import { renderError, renderPets } from './render'
 export type PetsEnv = {
   getPets: typeof getPets,
   getLocation: typeof getLocation
-  log: (s: string) => Pure<void>
+  log: (s: string) => Fx<None, void>
 
   radiusMiles: number,
   locationTimeout: number,
