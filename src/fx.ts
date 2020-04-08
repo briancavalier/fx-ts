@@ -29,9 +29,11 @@ type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
 // Create an Fx computation from a generator function.
 // Crucially, allows the computation to be started more than once by calling the
 // generator function each time its iterator is requested
-export const doFx = <Y extends Env<any, any>, R>(f: () => Generator<Y, R, unknown>): Fx<Capabilities<Y>, R> => ({
-  [Symbol.iterator]: f as () => Iterator<Y, R, unknown>
-}) as Fx<Capabilities<Y>, R>
+export const doFx = <C, Y extends Env<any, any>, R>(f: (c: C) => Generator<Y, R, unknown>): Fx<C & Capabilities<Y>, R> => ({
+  *[Symbol.iterator](): Iterator<Y | Env<C, unknown>, R, unknown> {
+    return yield* f(yield* get<C>())
+  }
+}) as Fx<C & Capabilities<Y>, R>
 
 // Create a simple effect operation from an Env
 export const op = <C, A>(env: Env<C, A>): Fx<C, A> => ({
@@ -71,7 +73,7 @@ export const get = <C>() => op<C, C>(resumeNow)
 
 // Subtract CP from CR
 export type Use<CR, CP> =
-  CP extends CR ? unknown : CR extends CP ? Omit<CR, keyof CP> : CR
+  CP extends CR ? None : CR extends CP ? Omit<CR, keyof CP> : CR
 
 // Satisfy some or all of an Fx's required capabilities.
 export const use = <CR extends CP, CP, R>(fx: Fx<CR, R>, cp: CP): Fx<Use<CR, CP>, R> =>

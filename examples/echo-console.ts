@@ -7,8 +7,7 @@ type Print = { print(s: string): Fx<None, void> }
 
 type Read = { read: Fx<Async, string> }
 
-const main = doFx(function* () {
-  const { print, read } = yield* get<Print & Read>()
+const main = doFx(function* ({ print, read }: Print & Read) {
   while (true) {
     yield* print('> ')
     const s = yield* read

@@ -21,19 +21,16 @@ type RandomInt = { randomInt(min: number, max: number): Fx<None, number> }
 // -------------------------------------------------------------------
 // Basic operations that use the capabilites
 
-const println = (s: string): Fx<Print, void> => doFx(function* () {
-  const { print } = yield* get<Print>()
+const println = (s: string): Fx<Print, void> => doFx(function* ({ print }: Print) {
   return yield* print(`${s}${EOL}`)
 })
 
-const ask = (prompt: string): Fx<Print & Read & Async, string> => doFx(function* () {
-  const { print, read } = yield* get<Print & Read>()
+const ask = (prompt: string): Fx<Print & Read & Async, string> => doFx(function* ({ print, read }: Print & Read) {
   yield* print(prompt)
   return yield* read
 })
 
-const randomInt = (min: number, max: number): Fx<RandomInt, number> => doFx(function* () {
-  const { randomInt } = yield* get<RandomInt>()
+const randomInt = (min: number, max: number): Fx<RandomInt, number> => doFx(function* ({ randomInt }: RandomInt) {
   return yield* randomInt(min, max)
 })
 
@@ -84,11 +81,9 @@ const checkContinue = (name: string) => doFx(function* () {
 })
 
 // Main game loop. Play round after round until the user chooses to quit
-const main = doFx(function* () {
+const main = doFx(function* ({ min, max }: GameConfig) {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
-
-  const { min, max } = yield* get<GameConfig>()
 
   do {
     yield* play(name, min, max)

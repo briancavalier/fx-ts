@@ -2,7 +2,7 @@ import { IncomingMessage, request } from 'http'
 import { request as httpsRequest } from 'https'
 import { parse as parseUrl } from 'url'
 
-import { Async, async, doFx, fail, Fail, Fx, get } from '../../../../src'
+import { Async, async, doFx, fail, Fail, Fx } from '../../../../src'
 
 // Abstract Http capability interface
 export type Http<Effects, Req, Res> = { http(r: Req): Fx<Effects, Res> }
@@ -22,17 +22,17 @@ type Response =
 
 export type HttpEnv = Http<Async, Request, Response> & Async & Fail
 
-export const getJson = <R>(url: string, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> => doFx(function* () {
-  const { http } = yield* get<Http<Async, Request, Response>>()
-  const result = yield* http({ method: 'GET', url, headers })
-  return yield* interpretResponse<R>(url, result)
-})
+export const getJson = <R>(url: string, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> =>
+  doFx(function* ({ http }: Http<Async, Request, Response>) {
+    const result = yield* http({ method: 'GET', url, headers })
+    return yield* interpretResponse<R>(url, result)
+  })
 
-export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> => doFx(function* () {
-  const { http } = yield* get<Http<Async, Request, Response>>()
-  const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
-  return yield* interpretResponse<R>(url, result)
-})
+export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> =>
+  doFx(function* ({ http }: Http<Async, Request, Response>) {
+    const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
+    return yield* interpretResponse<R>(url, result)
+  })
 
 const interpretResponse = <R>(url: string, result: Response): Fx<Fail, R> => doFx(function* () {
   return result.type === 'Response' && result.response.statusCode === 200
