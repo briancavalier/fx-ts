@@ -2,7 +2,7 @@ import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 import {
-  Async, async, attempt, defaultAsyncEnv, doFx, Fx, get, Pure, pure, runFx, timeout
+  Async, async, attempt, defaultAsyncEnv, doFx, Fx, get, None, pure, runFx, timeout
 } from '../src'
 
 // -------------------------------------------------------------------
@@ -12,11 +12,11 @@ import {
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-type Print = { print(s: string): Pure<void> }
+type Print = { print(s: string): Fx<None, void> }
 
 type Read = { read: Fx<Async, string> }
 
-type RandomInt = { randomInt(min: number, max: number): Pure<number> }
+type RandomInt = { randomInt(min: number, max: number): Fx<None, number> }
 
 // -------------------------------------------------------------------
 // Basic operations that use the capabilites
@@ -107,7 +107,7 @@ const capabilities = {
 
   ...defaultAsyncEnv,
 
-  print: (s: string): Pure<void> =>
+  print: (s: string): Fx<None, void> =>
     pure(void process.stdout.write(s)),
 
   read: async<string>(k => {
@@ -119,7 +119,7 @@ const capabilities = {
     return () => readline.removeListener('line', k).close()
   }),
 
-  randomInt: (min: number, max: number): Pure<number> =>
+  randomInt: (min: number, max: number): Fx<None, number> =>
     pure(Math.floor(min + (Math.random() * (max - min))))
 }
 

@@ -11,7 +11,7 @@ import { Cancel, Env, Intersect, Resume, resume, resumeNow, runResume, uncancela
 export interface Fx<C, A> extends FxIterable<Env<C, unknown>, A> { }
 
 // An Fx that requires no particular capabilities and produces no effects
-export interface Pure<A> extends Fx<unknown, A> { }
+export type None = unknown
 
 export interface FxIterable<Y, R> {
   'fx-ts/Fx': never
@@ -40,9 +40,9 @@ export const op = <C, A>(env: Env<C, A>): Fx<C, A> => ({
 
 // Create an Fx that returns A, with no effects and requires
 // no particular environment
-export const pure = <A>(a: A): Pure<A> => ({
+export const pure = <A>(a: A): Fx<None, A> => ({
   *[Symbol.iterator](): Iterator<never, A, A> { return a }
-}) as Pure<A>
+}) as Fx<None, A>
 
 // Run an Fx by providing its remaining capability requirements
 export const runFx = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel =>

@@ -1,4 +1,4 @@
-import { defaultAsyncEnv, Pure, pure } from '../../src'
+import { defaultAsyncEnv, Fx, None, pure } from '../../src'
 import { httpEnv } from './src/infrastructure/http'
 import { getLocation } from './src/infrastructure/ipstack'
 import { getPets } from './src/infrastructure/petfinder'
@@ -21,7 +21,7 @@ export const env = {
     client_secret: process.env.PETFINDER_SECRET || ''
   },
 
-  log: (s: string): Pure<void> => pure(console.log(Date.now(), s)),
+  log: (s: string): Fx<None, void> => pure(console.log(Date.now(), s)),
 
   getLocation,
 
