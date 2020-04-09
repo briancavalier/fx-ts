@@ -28,7 +28,7 @@ export const delay = (ms: number): Fx<Delay & Async, void> => doFx(function* () 
   return yield* delay(ms)
 })
 
-export const timeout = <C, A>(ms: number, c: Fx<C, A>): Fx<C & Async & Delay & Fail, A> =>
+export const timeout = <C extends Async, A>(ms: number, c: Fx<C, A>): Fx<C & Async & Delay & Fail, A> =>
   race(c, delayFail(ms))
 
 const delayFail = (ms: number): Fx<Delay & Async & Fail, never> => doFx(function* () {
