@@ -1,10 +1,10 @@
-import { defaultAsyncEnv, Fx, None, pure } from '../../src'
+import { defaultEnv, Fx, Sync, sync } from '../../src'
 import { httpEnv } from './src/infrastructure/http'
 import { getLocation } from './src/infrastructure/ipstack'
 import { getPets } from './src/infrastructure/petfinder'
 
 export const env = {
-  ...defaultAsyncEnv,
+  ...defaultEnv,
   ...httpEnv,
 
   radiusMiles: Number(process.env.DEFAULT_RADIUS_MILES) || 10,
@@ -21,7 +21,7 @@ export const env = {
     client_secret: process.env.PETFINDER_SECRET || ''
   },
 
-  log: (s: string): Fx<None, void> => pure(console.log(Date.now(), s)),
+  log: (s: string): Fx<Sync, void> => sync(() => console.log(Date.now(), s)),
 
   getLocation,
 

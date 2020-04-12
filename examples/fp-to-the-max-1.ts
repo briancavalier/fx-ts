@@ -1,9 +1,7 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import {
-  Async, async, attempt, defaultAsyncEnv, doFx, Fx, get, None, pure, runFx, timeout
-} from '../src'
+import { Async, async, attempt, defaultEnv, doFx, Fx, runFx, Sync, sync, timeout } from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -12,25 +10,25 @@ import {
 // -------------------------------------------------------------------
 // Capabilities the game will need
 
-type Print = { print(s: string): Fx<None, void> }
+type Print = { print(s: string): Fx<Sync, void> }
 
 type Read = { read: Fx<Async, string> }
 
-type RandomInt = { randomInt(min: number, max: number): Fx<None, number> }
+type RandomInt = { randomInt(min: number, max: number): Fx<Sync, number> }
 
 // -------------------------------------------------------------------
 // Basic operations that use the capabilites
 
-const println = (s: string): Fx<Print, void> => doFx(function* ({ print }: Print) {
+const println = (s: string) => doFx(function* ({ print }: Print) {
   return yield* print(`${s}${EOL}`)
 })
 
-const ask = (prompt: string): Fx<Print & Read & Async, string> => doFx(function* ({ print, read }: Print & Read) {
+const ask = (prompt: string) => doFx(function* ({ print, read }: Print & Read) {
   yield* print(prompt)
   return yield* read
 })
 
-const randomInt = (min: number, max: number): Fx<RandomInt, number> => doFx(function* ({ randomInt }: RandomInt) {
+const randomInt = (min: number, max: number) => doFx(function* ({ randomInt }: RandomInt) {
   return yield* randomInt(min, max)
 })
 
@@ -100,10 +98,10 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  ...defaultAsyncEnv,
+  ...defaultEnv,
 
-  print: (s: string): Fx<None, void> =>
-    pure(void process.stdout.write(s)),
+  print: (s: string): Fx<Sync, void> =>
+    sync(() => void process.stdout.write(s)),
 
   read: async<string>(k => {
     const readline = createInterface({ input: process.stdin })
@@ -114,8 +112,8 @@ const capabilities = {
     return () => readline.removeListener('line', k).close()
   }),
 
-  randomInt: (min: number, max: number): Fx<None, number> =>
-    pure(Math.floor(min + (Math.random() * (max - min))))
+  randomInt: (min: number, max: number): Fx<Sync, number> =>
+    sync(() => Math.floor(min + (Math.random() * (max - min))))
 }
 
 runFx(main, capabilities)

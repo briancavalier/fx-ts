@@ -1,9 +1,9 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, defaultAsyncEnv, doFx, Fx, get, None, pure, runFx } from '../src'
+import { Async, async, defaultEnv, doFx, Fx, runFx, sync, Sync } from '../src'
 
-type Print = { print(s: string): Fx<None, void> }
+type Print = { print(s: string): Fx<Sync, void> }
 
 type Read = { read: Fx<Async, string> }
 
@@ -16,10 +16,10 @@ const main = doFx(function* ({ print, read }: Print & Read) {
 })
 
 const capabilities = {
-  ...defaultAsyncEnv,
+  ...defaultEnv,
 
-  print: (s: string): Fx<None, void> =>
-    pure(void process.stdout.write(s)),
+  print: (s: string): Fx<Sync, void> =>
+    sync(() => void process.stdout.write(s)),
 
   read: async<string>(k => {
     const handler = (s: string): void => {

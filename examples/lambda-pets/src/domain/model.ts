@@ -2,7 +2,7 @@ import { Fx } from '../../../../src'
 
 // Domain model
 
-export type AdoptablePetsNear = {
+export type AdoptablePets = {
   readonly location: Location,
   readonly radiusMiles: number,
   readonly pets: Pets
