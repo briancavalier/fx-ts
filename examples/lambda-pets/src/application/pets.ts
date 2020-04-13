@@ -24,7 +24,7 @@ export const getAdoptablePetsNear = (ip: string) => doFx(function* () {
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = (ip: string): Fx<PetsEnv & HttpEnv & Delay & IpStackConfig & PetfinderConfig, AdoptablePets> => doFx(function* ({ radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets }) {
+export const tryGetAdoptablePetsNear = (ip: string): Fx<PetsEnv & HttpEnv & Delay & Sync & IpStackConfig & PetfinderConfig, AdoptablePets> => doFx(function* ({ radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets }) {
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
   yield* log(`Geo location for ${ip}: ${location.latitude} ${location.longitude}`)
