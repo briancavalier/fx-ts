@@ -1,4 +1,4 @@
-import { Cancel, Env, Intersect, Resume, resume, resumeNow, runResume, uncancelable } from './env'
+import { Cancel, Env, Intersect, resume, resumeNow, uncancelable } from './env'
 
 export const URI: unique symbol = Symbol('@fx-ts/Fx')
 
@@ -10,17 +10,15 @@ export const URI: unique symbol = Symbol('@fx-ts/Fx')
 // over its effects.  This makes it quite natural to implement effectful
 // computations by writing a generator function that yields effects.
 // Pure code simply executes between the yields.
-export interface Fx<C, A> extends FxIterable<Env<C, unknown>, A> { }
-
-// An Fx that requires no particular capabilities and produces no effects
-export type None = unknown
-
-export interface FxIterable<Y, R> {
+export interface Fx<C, A> {
   // URI prevents using a native generator directly as an Fx
   // since native generators are stateful and not referentially transparent
   readonly [URI]: undefined
-  [Symbol.iterator](): Iterator<Y, R, unknown>
+  [Symbol.iterator](): Iterator<Env<C, unknown>, A, unknown>
 }
+
+// An Fx that requires no particular capabilities and produces no effects
+export type None = unknown
 
 export type Effects<F> = F extends Fx<infer C, any> ? C : never
 export type Return<F> = F extends Fx<any, infer A> ? A : never
@@ -33,14 +31,14 @@ type CapabilitiesOf<E> = E extends Env<infer C, any> ? C : never
 // Create an Fx from a generator function.
 // Crucially, allows the computation to be started more than once by calling the
 // generator function each time its iterator is requested
-export const doFx = <C, Y extends Env<any, any>, R>(f: (c: C) => Generator<Y, R, unknown>): Fx<C & Capabilities<Y>, R> =>
+export const doFx = <C, Y extends Env<any, any>, A>(f: (c: C) => Generator<Y, A, unknown>): Fx<C & Capabilities<Y>, A> =>
   new GenFx(f)
 
 class GenFx<C, Y extends Env<any, any>, A> implements Fx<C & Capabilities<Y>, A> {
-  public readonly [URI] = undefined
+  public readonly [URI]: undefined
 
   constructor(public readonly gen: (c: C) => Generator<Y, A, unknown>) { }
-  *[Symbol.iterator]() {
+  *[Symbol.iterator](): Iterator<Env<C & Capabilities<Y>, unknown>, A, unknown> {
     return yield* this.gen(yield* get<C>())
   }
 }
@@ -49,7 +47,7 @@ class GenFx<C, Y extends Env<any, any>, A> implements Fx<C & Capabilities<Y>, A>
 export const op = <C, A>(env: Env<C, A>): Fx<C, A> => new OpFx(env)
 
 class OpFx<C, A> implements Fx<C, A> {
-  public readonly [URI] = undefined
+  public readonly [URI]: undefined
 
   constructor(public readonly env: Env<C, A>) { }
   *[Symbol.iterator](): Iterator<Env<C, A>, A, A> {
@@ -62,7 +60,7 @@ class OpFx<C, A> implements Fx<C, A> {
 export const pure = <A>(a: A): Fx<None, A> => new PureFx(a)
 
 class PureFx<A> implements Fx<None, A>, Iterator<never, A, never> {
-  public readonly [URI] = undefined
+  public readonly [URI]: undefined
   public readonly done: true = true
 
   constructor(public readonly value: A) { }
@@ -93,7 +91,9 @@ export const get = <C>() => op<C, C>(resumeNow)
 
 // Subtract CP from CR
 export type Use<CR, CP> =
-  CP extends CR ? None : CR extends CP ? Omit<CR, keyof CP> : CR
+  CP extends CR ? None
+  : CR extends CP ? Omit<CR, keyof CP>
+  : CR
 
 // Satisfy some or all of an Fx's required capabilities.
 export const use = <CR extends CP, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
