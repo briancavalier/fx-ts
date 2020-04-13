@@ -15,8 +15,8 @@ export const zip = <Fxs extends readonly Fx<any, any>[]>(...fxs: Fxs): Fx<AllEff
     let remaining = fxs.length
     const results = Array(remaining) as Writeable<ZipResults<Fxs>>
 
-    const cancels = fxs.map((computation: Fxs[typeof i], i) =>
-      runFx(computation, c, (x: AnyResult<Fxs>) => {
+    const cancels = fxs.map((fx: Fxs[typeof i], i) =>
+      runFx(fx, c, (x: AnyResult<Fxs>) => {
         results[i] = x
         return --remaining === 0 ? k(results) : uncancelable
       }))

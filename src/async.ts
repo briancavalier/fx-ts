@@ -44,8 +44,8 @@ export const race = <C1 extends Async, C2 extends Async, A, B, Fxs extends reado
 
 const raceArray = <Fxs extends readonly Fx<any, any>[]>(fxs: Fxs): Fx<AllEffects<Fxs>, AnyResult<Fxs>> =>
   op(c => resume(k => {
-    const cancels = fxs.map((computation: Fxs[number]) =>
-      runFx(computation, c, (x: AnyResult<Fxs>) => {
+    const cancels = fxs.map((fx: Fxs[number]) =>
+      runFx(fx, c, (x: AnyResult<Fxs>) => {
         cancelAll()
         return k(x)
       }))
