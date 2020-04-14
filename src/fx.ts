@@ -20,7 +20,7 @@ export interface Fx<C, A> {
 // An Fx that requires no particular capabilities and produces no effects
 export type None = unknown
 
-export type Effects<F> = F extends Fx<infer C, any> ? C : never
+export type Effects<F> = F extends Fx<infer C, any> ? unknown extends C ? never : C : never
 export type Return<F> = F extends Fx<any, infer A> ? A : never
 
 // Get the type of capabilities required by Envs

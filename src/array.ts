@@ -5,9 +5,9 @@ export type AllEffects<Fxs extends readonly Fx<any, any>[]> = Intersect<Effects<
 
 export type AnyResult<Fxs extends readonly Fx<any, any>[]> = Return<Fxs[number]>
 
-type Writeable<T> = { -readonly [P in keyof T]: T[P] }
+export type ZipResults<Fxs extends readonly Fx<any, any>[]> = { readonly [K in keyof Fxs]: Return<Fxs[K]> }
 
-export type ZipResults<Fxs extends readonly Fx<any, any>[]> = { [K in keyof Fxs]: Return<Fxs[K]> }
+type Writeable<T> = { -readonly [P in keyof T]: T[P] }
 
 // Turn a tuple or array of computations into a computation of a tuple or array
 export const zip = <Fxs extends readonly Fx<any, any>[]>(...fxs: Fxs): Fx<AllEffects<Fxs>, ZipResults<Fxs>> =>

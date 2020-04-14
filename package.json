@@ -9,7 +9,7 @@
     "url": "https://github.com/briancavalier/fx-ts.git"
   },
   "scripts": {
-    "test": "tsc --noEmit",
+    "test": "tsc --build tsconfig.test.json",
     "prepublishOnly": "npm run build",
     "build": "tsc"
   },
@@ -23,6 +23,7 @@
     "@types/benchmark": "^1.0.31",
     "@types/node": "13.11.1",
     "benchmark": "^2.1.4",
+    "conditional-type-checks": "^1.0.5",
     "ts-node": "8.8.2",
     "typescript": "3.8.3"
   }
