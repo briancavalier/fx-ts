@@ -1,6 +1,6 @@
 
 import { AllEffects, AnyResult } from './array'
-import { Cancel, Env, Intersect, Resume, resume, uncancelable } from './env'
+import { Cancel, Resume, resume } from './env'
 import { fail, Fail } from './fail'
 import { doFx, Fx, get, op, runFx } from './fx'
 
