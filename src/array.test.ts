@@ -1,6 +1,6 @@
 import { assert, IsExact } from 'conditional-type-checks'
 
-import { zip } from './array'
+import { AllEffects, zip } from './array'
 import { Effects, Fx, None, pure } from './fx'
 
 {
@@ -42,4 +42,12 @@ import { Effects, Fx, None, pure } from './fx'
   const zip2 = zip(fx2, fx1)
   assert<IsExact<Effects<typeof zip1>, Effects<typeof zip2>>>(true)
   assert<IsExact<{ a: number, b: string }, Effects<typeof zip1>>>(true)
+}
+
+{
+  // AllEffects aggregates capabilities with None
+  // None doesn't annihilate capabilities
+  type A = { a: number }
+  type B = { b: string }
+  assert<IsExact<AllEffects<[Fx<None, unknown>, Fx<A, unknown>, Fx<B, unknown>]>, None & A & B>>(true)
 }
