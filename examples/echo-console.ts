@@ -3,9 +3,9 @@ import { createInterface } from 'readline'
 
 import { async, defaultEnv, doFx, Fx, FxInterface, runFx, sync, Sync, use } from '../src'
 
-interface Print { print(s: string): FxInterface<void> }
+type Print = { print(s: string): FxInterface<void> }
 
-interface Read { read: FxInterface<string> }
+type Read = { read: FxInterface<string> }
 
 const main = doFx(function* ({ print, read }: Print & Read) {
   while (true) {
