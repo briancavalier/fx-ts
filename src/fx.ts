@@ -115,7 +115,7 @@ export type KeysToRetain<A, B> = {
   [K in keyof A]: K extends keyof B ? B[K] extends A[K] ? never : K : K
 }[keyof A]
 
-type None = { [K in string | symbol | number]?: undefined }
+export type None = { [K in string | symbol | number]?: undefined }
 
 export const use = <CR, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
   op(c => resume(k => runFxWith(fx, { ...c as any, ...cp }, k)))
