@@ -15,18 +15,11 @@ export interface FxInterface<A> {
   [Symbol.iterator](): Iterator<any, A, unknown>
 }
 
-export interface FxI<E extends Env<any, any>, A> extends FxInterface<A> {
-  // readonly [URI]: undefined
+interface FxI<E extends Env<any, any>, A> extends FxInterface<A> {
   [Symbol.iterator](): Iterator<E, A, unknown>
 }
 
-export interface Fx<C, A> extends FxI<Env<C, unknown>, A> {
-  // URI prevents using a native generator directly as an Fx
-  // since native generators are stateful and not referentially transparent
-  // readonly [URI]: undefined
-  // readonly [URI]: undefined
-  // [Symbol.iterator](): Iterator<Env<C, unknown>, A, unknown>
-}
+export interface Fx<C, A> extends FxI<Env<C, unknown>, A> { }
 
 export type Effects<F> = F extends Fx<infer C, any> ? C : never
 export type Return<F> = F extends Fx<any, infer A> ? A : never
