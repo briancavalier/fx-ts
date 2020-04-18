@@ -2,7 +2,7 @@
 import { AllEffects, AnyResult } from './array'
 import { Cancel, Resume, resume } from './env'
 import { fail, Fail } from './fail'
-import { doFx, Fx, get, op, runFx } from './fx'
+import { doFx, Fx, get, op, runFxWith } from './fx'
 
 export type AsyncTask<A> = (k: (a: A) => Cancel) => Cancel
 
@@ -45,7 +45,7 @@ export const race = <C1 extends Async, C2 extends Async, A, B, Fxs extends reado
 const raceArray = <Fxs extends readonly Fx<any, any>[]>(fxs: Fxs): Fx<AllEffects<Fxs>, AnyResult<Fxs>> =>
   op(c => resume(k => {
     const cancels = fxs.map((fx: Fxs[number]) =>
-      runFx(fx, c, (x: AnyResult<Fxs>) => {
+      runFxWith(fx, c, (x: AnyResult<Fxs>) => {
         cancelAll()
         return k(x)
       }))

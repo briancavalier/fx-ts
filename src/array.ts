@@ -1,5 +1,5 @@
 import { Intersect, resume, uncancelable } from './env'
-import { Effects, Fx, op, Return, runFx } from './fx'
+import { Effects, Fx, op, Return, runFxWith } from './fx'
 
 export type AllEffects<Fxs extends readonly Fx<any, any>[]> = Intersect<Effects<Fxs[number]>>
 
@@ -16,7 +16,7 @@ export const zip = <Fxs extends readonly Fx<any, any>[]>(...fxs: Fxs): Fx<AllEff
     const results = Array(remaining) as Writeable<ZipResults<Fxs>>
 
     const cancels = fxs.map((fx: Fxs[typeof i], i) =>
-      runFx(fx, c, (x: AnyResult<Fxs>) => {
+      runFxWith(fx, c, (x: AnyResult<Fxs>) => {
         results[i] = x
         return --remaining === 0 ? k(results) : uncancelable
       }))

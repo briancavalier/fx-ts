@@ -1,7 +1,9 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, attempt, defaultEnv, doFx, Fx, runFx, Sync, sync, timeout } from '../src'
+import {
+  Async, async, attempt, defaultEnv, doFx, Fx, runFx, Sync, sync, timeout, use
+} from '../src'
 
 // -------------------------------------------------------------------
 // The number guessing game example from
@@ -116,4 +118,4 @@ const capabilities = {
     sync(() => Math.floor(min + (Math.random() * (max - min))))
 }
 
-runFx(main, capabilities)
+runFx(use(main, capabilities))

@@ -1,5 +1,5 @@
 import { Resume, resume, uncancelable } from './env'
-import { Fx, op, pure, runFx, Use } from './fx'
+import { Fx, op, pure, runFxWith, Use } from './fx'
 
 // ------------------------------------------------------------
 // Fail effect
@@ -16,10 +16,10 @@ export const catchAll = <C1 extends Fail, C2, A, B>(fx: Fx<C1, A>, f: (e: Error)
   op((c): Resume<A | B> => resume(k => {
     const fail = (e: Error) => {
       cancel()
-      return resume(() => runFx(f(e), c, k))
+      return resume(() => runFxWith(f(e), c, k))
     }
 
     let cancel = uncancelable
-    cancel = runFx(fx, { ...c as any, fail }, k)
+    cancel = runFxWith(fx, { ...c as any, fail }, k)
     return cancel
   }))
