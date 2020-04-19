@@ -10,15 +10,20 @@ export const URI: unique symbol = Symbol('@fx-ts/Fx')
 // over its effects.  This makes it quite natural to implement effectful
 // computations by writing a generator function that yields effects.
 // Pure code simply executes between the yields.
+
+// An abstract interface that doesn't commit to any particular requirements or effects
+// Implementations will pick concrete requirements and effects by returning an Fx
 export interface FxInterface<A> {
   readonly [URI]: undefined
   [Symbol.iterator](): Iterator<any, A, unknown>
 }
 
+// Internal.  Bridges between FxInterface and Fx
 interface FxI<E extends Env<any, any>, A> extends FxInterface<A> {
   [Symbol.iterator](): Iterator<E, A, unknown>
 }
 
+// A concrete Fx with fully specified requirements and effects
 export interface Fx<C, A> extends FxI<Env<C, unknown>, A> { }
 
 export type Effects<F> = F extends Fx<infer C, any> ? C : never
@@ -70,13 +75,13 @@ class PureFx<A> implements Fx<{}, A>, Iterator<never, A, never> {
 }
 
 // Run an Fx by providing its remaining capability requirements
-export const runFxWith = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel => {
+export const unsafeRunFxWith = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel => {
   const i = fx[Symbol.iterator]()
   return stepFx(i, i.next(), c, k)
 }
 
 export const runFx = <A>(fx: Fx<None, A>, k: (r: A) => Cancel = () => uncancelable): Cancel =>
-  runFxWith(fx, {}, k)
+  unsafeRunFxWith(fx, {}, k)
 
 // Process synchronous and asynchronous effects in constant stack
 const stepFx = <C, A>(i: Iterator<Env<C, unknown>, A, unknown>, ir: IteratorResult<Env<C, unknown>, A>, c: C, k: (r: A) => Cancel): Cancel => {
@@ -108,25 +113,14 @@ export type KeysToRetain<A, B> = {
   [K in keyof A]: K extends keyof B ? B[K] extends A[K] ? never : K : K
 }[keyof A]
 
-export type None = { [K in string | symbol | number]?: undefined }
+export interface None extends Record<PropertyKey, never> { }
 
+// Satisfy some or all of an Fx's required capabilities by providing
+// concrete implementations
 export const use = <CR, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
-  op(c => resume(k => runFxWith(fx, { ...c as any, ...cp }, k)))
-
-// An Fx that requires no particular capabilities and produces no effects
-// interface None extends Record<string | number | symbol, void> { }
-
-// Subtract CP from CR
-// export type Remove<CR, CP> =
-//   CP extends CR ? None
-//   : CR extends CP ? Omit<CR, keyof CP>
-//   : CR
-
-// // Satisfy some or all of an Fx's required capabilities.
-// export const use = <CR extends CP, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
-//   embed(fx, (c: Use<CR, CP>): CR => ({ ...c as any, ...cp }))
+  op(c => resume(k => unsafeRunFxWith(fx, { ...c as any, ...cp }, k)))
 
 // Adapt an Fx that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <C0, C1, A>(fx: Fx<C1, A>, f: (c: C0) => C1): Fx<C0, A> =>
-  op(c0 => resume(k => runFxWith(fx, f(c0), k)))
+  op(c0 => resume(k => unsafeRunFxWith(fx, f(c0), k)))

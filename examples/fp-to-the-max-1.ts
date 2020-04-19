@@ -2,7 +2,7 @@ import { EOL } from 'os'
 import { createInterface } from 'readline'
 
 import {
-  Async, async, attempt, defaultEnv, doFx, Fx, runFx, Sync, sync, timeout, use
+  async, attempt, defaultEnv, doFx, Fx, FxInterface, get, runFx, Sync, sync, timeout, use
 } from '../src'
 
 // -------------------------------------------------------------------
@@ -10,49 +10,32 @@ import {
 // https://www.youtube.com/watch?v=sxudIMiOo68
 
 // -------------------------------------------------------------------
-// Capabilities the game will need
+// Game domain model and interfaces.  The game needs to be able
+// to generate a secret within some bounds.  The user will try to
+// guess the secret, and the game needs to be able to check whether
+// the user's guess matches the secret
 
-type Print = { print(s: string): Fx<Sync, void> }
-
-type Read = { read: Fx<Async, string> }
-
-type RandomInt = { randomInt(min: number, max: number): Fx<Sync, number> }
-
-// -------------------------------------------------------------------
-// Basic operations that use the capabilites
-
-const println = (s: string) => doFx(function* ({ print }: Print) {
-  return yield* print(`${s}${EOL}`)
-})
-
-const ask = (prompt: string) => doFx(function* ({ print, read }: Print & Read) {
-  yield* print(prompt)
-  return yield* read
-})
-
-const randomInt = (min: number, max: number) => doFx(function* ({ randomInt }: RandomInt) {
-  return yield* randomInt(min, max)
-})
-
-// -------------------------------------------------------------------
-// The game
-
-// Min/max range for the number guessing game
-type GameConfig = {
+type Game = {
   min: number,
   max: number
 }
+
+// Generate a secret
+type GenerateSecret = { generateSecret(c: Game): FxInterface<number> }
 
 // Core "business logic": evaluate the user's guess
 const checkAnswer = (secret: number, guess: number): boolean =>
   secret === guess
 
+// -------------------------------------------------------------------
+// The game
+
 // Play one round of the game.  Generate a number and ask the user
 // to guess it.
-const play = (name: string, min: number, max: number) => doFx(function* () {
-  const secret = yield* randomInt(min, max)
+const play = (name: string, config: Game) => doFx(function* ({ generateSecret }: GenerateSecret) {
+  const secret = yield* generateSecret(config)
   const result =
-    yield* attempt(timeout(3000, ask(`Dear ${name}, please guess a number from ${min} to ${max}: `)))
+    yield* attempt(timeout(3000, ask(`Dear ${name}, please guess a number from ${config.min} to ${config.max}: `)))
 
   if (typeof result === 'string') {
     const guess = Number(result)
@@ -81,15 +64,39 @@ const checkContinue = (name: string) => doFx(function* () {
 })
 
 // Main game loop. Play round after round until the user chooses to quit
-const main = doFx(function* ({ min, max }: GameConfig) {
+const main = doFx(function* () {
   const name = yield* ask('What is your name? ')
   yield* println(`Hello, ${name} welcome to the game!`)
 
+  const config = yield* get<Game>()
+
   do {
-    yield* play(name, min, max)
+    yield* play(name, config)
   } while (yield* checkContinue(name))
 
   yield* println(`Thanks for playing, ${name}.`)
+})
+
+// -------------------------------------------------------------------
+// Infrastructure capabilities the game needs to interact with
+// the user, generate a secret, etc.
+
+type Print = { print(s: string): FxInterface<void> }
+
+type Read = { read: FxInterface<string> }
+
+type Random = { random: FxInterface<number> }
+
+// -------------------------------------------------------------------
+// Basic operations that use the capabilites
+
+const println = (s: string) => doFx(function* ({ print }: Print) {
+  return yield* print(`${s}${EOL}`)
+})
+
+const ask = (prompt: string) => doFx(function* ({ print, read }: Print & Read) {
+  yield* print(prompt)
+  return yield* read
 })
 
 // -------------------------------------------------------------------
@@ -100,7 +107,9 @@ const capabilities = {
   min: 1,
   max: 5,
 
-  ...defaultEnv,
+  generateSecret: ({ min, max }: Game) => doFx(function* ({ random }: Random) {
+    return Math.floor(min + (yield* random) * max)
+  }),
 
   print: (s: string): Fx<Sync, void> =>
     sync(() => void process.stdout.write(s)),
@@ -114,8 +123,10 @@ const capabilities = {
     return () => readline.removeListener('line', k).close()
   }),
 
-  randomInt: (min: number, max: number): Fx<Sync, number> =>
-    sync(() => Math.floor(min + (Math.random() * (max - min))))
+  random: sync(Math.random),
+
+  ...defaultEnv,
 }
 
-runFx(use(main, capabilities))
+const m = use(main, capabilities)
+runFx(m)
