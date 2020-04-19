@@ -128,5 +128,4 @@ const capabilities = {
   ...defaultEnv,
 }
 
-const m = use(main, capabilities)
-runFx(m)
+runFx(use(main, capabilities))
