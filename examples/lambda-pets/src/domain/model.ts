@@ -1,4 +1,4 @@
-import { Fx } from '../../../../src'
+import { FxInterface } from '../../../../src'
 
 // Domain model
 
@@ -34,6 +34,6 @@ export const defaultLocation: Location = {
 // Domain model access interfaces.
 // These are implemented by infrastructure
 
-export type GetPets<Effects> = (l: GeoLocation, radiusMiles: number) => Fx<Effects, Pets>
+export type GetPets = (l: GeoLocation, radiusMiles: number) => FxInterface<Pets>
 
-export type GetLocation<Effects> = (host: string) => Fx<Effects, Location>
+export type GetLocation = (host: string) => FxInterface<Location>
