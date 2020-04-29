@@ -15,7 +15,7 @@
     "@types/node": "^13.13.4",
     "serverless": "^1.69.0",
     "serverless-webpack": "^5.3.1",
-    "ts-loader": "^6.2.2",
+    "ts-loader": "^7.0.1",
     "typescript": "^3.2.4",
     "webpack": "^4.43.0",
     "webpack-node-externals": "^1.7.2"
