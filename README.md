@@ -23,9 +23,9 @@ npm install --save fx-ts
 
 ## Examples
 
-* [echo-console](#examples/echo-console.ts): A simple read-print loop. A good introduction to the basics of capabilities and effects.
-* [fp-to-the-max](#examples/fp-to-the-max-1.ts): A more involved example number guessing game example from https://www.youtube.com/watch?v=sxudIMiOo68
-* [lambda-pets](#examples/lambda-pets): A realistic AWS Lambda application that shows adoptable pets near the user's IP Address using https://ipstack.com and https://petfinder.com
+* [echo-console](/examples/echo-console.ts): A simple read-print loop. A good introduction to the basics of capabilities and effects.
+* [fp-to-the-max](/examples/fp-to-the-max-1.ts): A more involved example number guessing game example from https://www.youtube.com/watch?v=sxudIMiOo68
+* [lambda-pets](/examples/lambda-pets): A realistic AWS Lambda application that shows adoptable pets near the user's IP Address using https://ipstack.com and https://petfinder.com
 
 ## Documentation
 
