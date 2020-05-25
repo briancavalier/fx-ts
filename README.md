@@ -23,9 +23,27 @@ npm install --save fx-ts
 
 ## Examples
 
-* [echo-console](#examples/echo-console.ts): A simple read-print loop. A good introduction to the basics of capabilities and effects.
-* [fp-to-the-max](#examples/fp-to-the-max-1.ts): A more involved example number guessing game example from https://www.youtube.com/watch?v=sxudIMiOo68
-* [lambda-pets](#examples/lambda-pets): A realistic AWS Lambda application that shows adoptable pets near the user's IP Address using https://ipstack.com and https://petfinder.com
+These examples are intended to be run against master using ts-node.  For example:
+
+```sh
+$ ./node_modules/.bin/ts-node -O '{ "module": "commonjs" }' ./examples/echo-console.ts
+```
+
+* [echo-console](examples/echo-console.ts): A simple read-print loop. A good introduction to the basics of capabilities and effects.
+* [fp-to-the-max](examples/fp-to-the-max-1.ts): A more involved example number guessing game example from https://www.youtube.com/watch?v=sxudIMiOo68
+
+This example runs on AWS Lambda.  [**If you have a serverless account and have setup your AWS credentials**](https://www.serverless.com/framework/docs/getting-started#set-up-your-free-pro-account), you can deploy it using `serverless`:
+
+```sh
+$ cd examples/lambda-pets
+$ ./node_modules/.bin/serverless deploy
+```
+
+* [lambda-pets](examples/lambda-pets): A realistic AWS Lambda application that shows adoptable pets near the user's IP Address using https://ipstack.com and https://petfinder.com
+
+### Running the examples
+
+The
 
 ## Documentation
 
