@@ -13,7 +13,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.56",
     "@types/node": "^13.13.5",
-    "serverless": "^1.72.0",
+    "serverless": "^1.73.0",
     "serverless-webpack": "^5.3.2",
     "ts-loader": "^6.2.2",
     "typescript": "^3.9.5",
