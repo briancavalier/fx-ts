@@ -21,7 +21,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/benchmark": "^1.0.33",
-    "@types/node": "13.13.5",
+    "@types/node": "14.10.3",
     "benchmark": "^2.1.4",
     "conditional-type-checks": "^1.0.5",
     "ts-node": "8.10.2",
