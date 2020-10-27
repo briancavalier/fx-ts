@@ -25,6 +25,9 @@
     "benchmark": "^2.1.4",
     "conditional-type-checks": "^1.0.5",
     "ts-node": "8.10.2",
-    "typescript": "3.9.7"
+    "typescript": "^4.1.0-beta"
+  },
+  "dependencies": {
+    "ts-toolbelt": "^8.0.7"
   }
 }
