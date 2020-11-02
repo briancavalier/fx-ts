@@ -20,7 +20,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/benchmark": "^1.0.33",
+    "@types/benchmark": "^2.1.0",
     "@types/node": "13.13.5",
     "benchmark": "^2.1.4",
     "conditional-type-checks": "^1.0.5",
