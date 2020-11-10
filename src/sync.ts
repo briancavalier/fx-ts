@@ -1,6 +1,7 @@
-import { Resume } from './'
 import { Fail } from './fail'
 import { Fx, op } from './fx'
+
+import { Resume } from './'
 
 // ------------------------------------------------------------
 // Sync effect
@@ -10,12 +11,13 @@ import { Fx, op } from './fx'
 // sync(() => console.log(123)) vs. pure(123)
 export type Sync = { sync<A>(run: () => A): Resume<A> }
 
-export const sync = <A>(run: () => A): Fx<Sync, A> => op(c => c.sync(run))
+export const sync = <A>(run: () => A): Fx<Sync, A> => op((c) => c.sync(run))
 
-export const trySync = <A>(run: () => A): Fx<Sync & Fail, A> => op(c => {
-  try {
-    return c.sync(run)
-  } catch (e) {
-    return c.fail(e)
-  }
-})
+export const trySync = <A>(run: () => A): Fx<Sync & Fail, A> =>
+  op((c) => {
+    try {
+      return c.sync(run)
+    } catch (e) {
+      return c.fail(e)
+    }
+  })

@@ -1,4 +1,4 @@
-import { assert, IsExact } from 'conditional-type-checks'
+import { IsExact, assert } from 'conditional-type-checks'
 
 import { AllEffects, zip } from './array'
 import { Effects, Fx, None, pure } from './fx'
@@ -31,7 +31,7 @@ import { Effects, Fx, None, pure } from './fx'
   const zip1 = zip(fx1, fx2, zip(fx3, fx4))
   const zip2 = zip(zip(fx1, fx2), fx3, fx4)
   assert<IsExact<Effects<typeof zip1>, Effects<typeof zip2>>>(true)
-  assert<IsExact<{ a: number, b: string, c: boolean, d: Date }, Effects<typeof zip1>>>(true)
+  assert<IsExact<{ a: number; b: string; c: boolean; d: Date }, Effects<typeof zip1>>>(true)
 }
 
 {
@@ -41,7 +41,7 @@ import { Effects, Fx, None, pure } from './fx'
   const zip1 = zip(fx1, fx2)
   const zip2 = zip(fx2, fx1)
   assert<IsExact<Effects<typeof zip1>, Effects<typeof zip2>>>(true)
-  assert<IsExact<{ a: number, b: string }, Effects<typeof zip1>>>(true)
+  assert<IsExact<{ a: number; b: string }, Effects<typeof zip1>>>(true)
 }
 
 {

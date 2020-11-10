@@ -20,20 +20,26 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/no-use-before-define': 'off',
-    'import/order': ["error", {
-      "newlines-between": "always",
-      alphabetize: {
-        order: 'asc',
-        caseInsensitive: false
+    'import/order': [
+      'error',
+      {
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: false
+        }
       }
-    }],
+    ],
     // Enable sort-imports to sort named imports within a single import
     // statement, but *disable* its declaration sort, and let
     // import/order's alphabetize feature handle sorting declarations
     // based on import path.
-    'sort-imports': ['error', {
-      'ignoreDeclarationSort': true,
-    }],
+    'sort-imports': [
+      'error',
+      {
+        ignoreDeclarationSort: true
+      }
+    ]
   },
   settings: {
     'import/resolver': {
