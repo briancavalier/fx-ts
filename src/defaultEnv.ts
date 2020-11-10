@@ -1,4 +1,4 @@
-import { Async, async, Delay } from './async'
+import { Async, Delay, async } from './async'
 import { Resume, resume, resumeNow } from './env'
 import { Fx } from './fx'
 import { Sync } from './sync'
@@ -6,7 +6,7 @@ import { Sync } from './sync'
 export const defaultEnv: Sync & Async & Delay = {
   async: resume,
   delay: (ms: number): Fx<Async, void> =>
-    async<void>(k => {
+    async<void>((k) => {
       const t = setTimeout(k, ms)
       return () => clearTimeout(t)
     }),

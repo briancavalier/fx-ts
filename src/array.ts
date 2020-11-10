@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Intersect, resume, uncancelable } from './env'
-import { Effects, Fx, op, Return, runFx } from './fx'
+import { Effects, Fx, Return, op, runFx } from './fx'
 
 export type AllEffects<Fxs extends readonly Fx<any, any>[]> = Intersect<Effects<Fxs[number]>>
 
@@ -11,15 +12,18 @@ type Writeable<T> = { -readonly [P in keyof T]: T[P] }
 
 // Turn a tuple or array of computations into a computation of a tuple or array
 export const zip = <Fxs extends readonly Fx<any, any>[]>(...fxs: Fxs): Fx<AllEffects<Fxs>, ZipResults<Fxs>> =>
-  op((c: AllEffects<Fxs>) => resume<ZipResults<Fxs>>(k => {
-    let remaining = fxs.length
-    const results = Array(remaining) as Writeable<ZipResults<Fxs>>
+  op((c: AllEffects<Fxs>) =>
+    resume<ZipResults<Fxs>>((k) => {
+      let remaining = fxs.length
+      const results = Array(remaining) as Writeable<ZipResults<Fxs>>
 
-    const cancels = fxs.map((fx: Fxs[typeof i], i) =>
-      runFx(fx, c, (x: AnyResult<Fxs>) => {
-        results[i] = x
-        return --remaining === 0 ? k(results) : uncancelable
-      }))
+      const cancels = fxs.map((fx: Fxs[typeof i], i) =>
+        runFx(fx, c, (x: AnyResult<Fxs>) => {
+          results[i] = x
+          return --remaining === 0 ? k(results) : uncancelable
+        })
+      )
 
-    return () => cancels.forEach(c => c())
-  }))
+      return () => cancels.forEach((c) => c())
+    })
+  )
