@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.71",
-    "@types/node": "^14.14.22",
+    "@types/node": "^14.14.25",
     "serverless": "^2.22.0",
     "serverless-webpack": "^5.3.5",
     "ts-loader": "^8.0.14",
