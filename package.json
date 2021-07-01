@@ -24,7 +24,7 @@
     "@types/node": "14.14.41",
     "benchmark": "^2.1.4",
     "conditional-type-checks": "^1.0.5",
-    "ts-node": "9.1.1",
+    "ts-node": "10.0.0",
     "typescript": "4.3.5"
   }
 }
