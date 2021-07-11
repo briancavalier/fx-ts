@@ -2,7 +2,7 @@ import 'source-map-support/register'
 
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 
-import { runFx, uncancelable } from '../../src'
+import { runFx, uncancelable, use } from '../../src'
 import { env } from './env'
 import { getAdoptablePetsNear } from './src/application/pets'
 
@@ -11,5 +11,5 @@ import { getAdoptablePetsNear } from './src/application/pets'
 export const handler: APIGatewayProxyHandler = event =>
   new Promise<APIGatewayProxyResult>(resolve => {
     const fx = getAdoptablePetsNear(event.requestContext.identity.sourceIp)
-    runFx(fx, env, a => (resolve(a), uncancelable))
+    runFx(use(fx, env), a => (resolve(a), uncancelable))
   })

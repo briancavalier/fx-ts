@@ -2,10 +2,10 @@ import { IncomingMessage, request } from 'http'
 import { request as httpsRequest } from 'https'
 import { parse as parseUrl } from 'url'
 
-import { Async, doFx, fail, Fail, Fx, pure, tryAsync } from '../../../../src'
+import { Async, doFx, fail, Fail, Fx, FxInterface, pure, tryAsync } from '../../../../src'
 
 // Abstract Http capability interface
-export type Http<Effects, Req, Res> = { http(r: Req): Fx<Effects, Res> }
+export type Http<Req, Res> = { http(r: Req): FxInterface<Res> }
 
 // Concrete Http implementation for Node
 // Normally this would be separate from the abstract capability interface
@@ -17,15 +17,15 @@ type Req = { url: string, headers: { [name: string]: string } }
 
 type Response = [IncomingMessage, string]
 
-export type HttpEnv = Http<Async & Fail, Request, Response> & Async & Fail
+export type HttpEnv = Http<Request, Response>
 
-export const getJson = <R>(url: string, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> =>
+export const getJson = <R>(url: string, headers: { [name: string]: string } = {}): Fx<HttpEnv & Fail, R> =>
   doFx(function* ({ http }: HttpEnv) {
     const result = yield* http({ method: 'GET', url, headers })
     return yield* interpretResponse<R>(url, result)
   })
 
-export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}): Fx<HttpEnv, R> =>
+export const postJson = <A, R>(url: string, a: A, headers: { [name: string]: string } = {}): Fx<HttpEnv & Fail, R> =>
   doFx(function* ({ http }: HttpEnv) {
     const result = yield* http({ method: 'POST', url, headers, body: JSON.stringify(a) })
     return yield* interpretResponse<R>(url, result)
@@ -36,8 +36,8 @@ const interpretResponse = <R>(url: string, [response, body]: Response): Fx<Fail,
     ? pure(JSON.parse(body) as R)
     : fail(new Error(`Request failed ${response.statusCode}: ${url} ${body}`))
 
-export const httpEnv: Http<Async & Fail, Request, Response> = {
-  http: (r: Request) => tryAsync(k => {
+export const httpEnv = {
+  http: (r: Request): Fx<Async & Fail, Response> => tryAsync(k => {
     const options = { method: r.method, ...parseUrl(r.url), headers: r.headers }
     const req = options.protocol === 'https:' ? httpsRequest(options) : request(options)
 

@@ -25,5 +25,9 @@ export const env = {
 
   getLocation,
 
-  getPets
+  getPets,
+
+  fail: (e: Error) => {
+    throw e
+  }
 }

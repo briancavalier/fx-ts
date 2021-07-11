@@ -1,14 +1,11 @@
-import { attempt, catchAll, Delay, doFx, Fx, pure, Sync, timeout } from '../../../../src'
-import { AdoptablePets, defaultLocation } from '../domain/model'
-import { HttpEnv } from '../infrastructure/http'
-import { getLocation, IpStackConfig } from '../infrastructure/ipstack'
-import { getPets, PetfinderConfig } from '../infrastructure/petfinder'
+import { attempt, catchAll, doFx, Fail, Fx, FxInterface, pure, timeout } from '../../../../src'
+import { AdoptablePets, defaultLocation, GetLocation, GetPets } from '../domain/model'
 import { renderError, renderPets } from './render'
 
 export type PetsEnv = {
-  getPets: typeof getPets,
-  getLocation: typeof getLocation
-  log: (s: string) => Fx<Sync, void>
+  getPets: GetPets,
+  getLocation: GetLocation
+  log: (s: string) => FxInterface<void>
 
   radiusMiles: number,
   locationTimeout: number,
@@ -24,7 +21,7 @@ export const getAdoptablePetsNear = (ip: string) => doFx(function* () {
     : { statusCode: 200, body: renderPets(petsOrError), headers: HEADERS }
 })
 
-export const tryGetAdoptablePetsNear = (ip: string): Fx<PetsEnv & HttpEnv & Delay & Sync & IpStackConfig & PetfinderConfig, AdoptablePets> => doFx(function* ({ radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets }) {
+export const tryGetAdoptablePetsNear = (ip: string): Fx<Fail & PetsEnv, AdoptablePets> => doFx(function* ({ radiusMiles, locationTimeout, petsTimeout, log, getLocation, getPets }: PetsEnv) {
   const location = yield* catchAll(timeout(locationTimeout, getLocation(ip)), () => pure(defaultLocation))
 
   yield* log(`Geo location for ${ip}: ${location.latitude} ${location.longitude}`)

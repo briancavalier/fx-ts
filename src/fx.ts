@@ -10,17 +10,23 @@ export const URI: unique symbol = Symbol('@fx-ts/Fx')
 // over its effects.  This makes it quite natural to implement effectful
 // computations by writing a generator function that yields effects.
 // Pure code simply executes between the yields.
-export interface Fx<C, A> {
-  // URI prevents using a native generator directly as an Fx
-  // since native generators are stateful and not referentially transparent
+
+// An abstract interface that doesn't commit to any particular requirements or effects
+// Implementations will pick concrete requirements and effects by returning an Fx
+export interface FxInterface<A> {
   readonly [URI]: undefined
-  [Symbol.iterator](): Iterator<Env<C, unknown>, A, unknown>
+  [Symbol.iterator](): Iterator<any, A, unknown>
 }
 
-// An Fx that requires no particular capabilities and produces no effects
-export type None = unknown
+// Internal.  Bridges between FxInterface and Fx
+interface FxI<E extends Env<any, any>, A> extends FxInterface<A> {
+  [Symbol.iterator](): Iterator<E, A, unknown>
+}
 
-export type Effects<F> = F extends Fx<infer C, any> ? unknown extends C ? never : C : never
+// A concrete Fx with fully specified requirements and effects
+export interface Fx<C, A> extends FxI<Env<C, unknown>, A> { }
+
+export type Effects<F> = F extends Fx<infer C, any> ? C : never
 export type Return<F> = F extends Fx<any, infer A> ? A : never
 
 // Get the type of capabilities required by Envs
@@ -57,9 +63,9 @@ class OpFx<C, A> implements Fx<C, A> {
 
 // Create an Fx that returns A, with no effects and requires
 // no particular environment
-export const pure = <A>(a: A): Fx<None, A> => new PureFx(a)
+export const pure = <A>(a: A): Fx<{}, A> => new PureFx(a)
 
-class PureFx<A> implements Fx<None, A>, Iterator<never, A, never> {
+class PureFx<A> implements Fx<{}, A>, Iterator<never, A, never> {
   public readonly [URI]: undefined
   public readonly done: true = true
 
@@ -69,10 +75,13 @@ class PureFx<A> implements Fx<None, A>, Iterator<never, A, never> {
 }
 
 // Run an Fx by providing its remaining capability requirements
-export const runFx = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel => {
+export const unsafeRunFxWith = <C, A>(fx: Fx<C, A>, c: C, k: (r: A) => Cancel = () => uncancelable): Cancel => {
   const i = fx[Symbol.iterator]()
   return stepFx(i, i.next(), c, k)
 }
+
+export const runFx = <A>(fx: Fx<None, A>, k: (r: A) => Cancel = () => uncancelable): Cancel =>
+  unsafeRunFxWith(fx, {}, k)
 
 // Process synchronous and asynchronous effects in constant stack
 const stepFx = <C, A>(i: Iterator<Env<C, unknown>, A, unknown>, ir: IteratorResult<Env<C, unknown>, A>, c: C, k: (r: A) => Cancel): Cancel => {
@@ -89,17 +98,29 @@ const stepFx = <C, A>(i: Iterator<Env<C, unknown>, A, unknown>, ir: IteratorResu
 // Request part of the environment by type
 export const get = <C>() => op<C, C>(resumeNow)
 
-// Subtract CP from CR
-export type Use<CR, CP> =
-  CP extends CR ? None
-  : CR extends CP ? Omit<CR, keyof CP>
-  : CR
+export type Use<C, P, D = C & Dependencies<P>> = Pick<D, KeysToRetain<D, P>>
 
-// Satisfy some or all of an Fx's required capabilities.
-export const use = <CR extends CP, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
-  embed(fx, (c: Use<CR, CP>): CR => ({ ...c as any, ...cp }))
+export type Dependencies<C> = Intersect<Collect<C>[keyof C]>
+
+export type Collect<C> = {
+  [K in keyof C]:
+  C[K] extends (...a: any[]) => Fx<infer C, any> ? C & Dependencies<C>
+  : C[K] extends Fx<infer C, any> ? C & Dependencies<C>
+  : never
+}
+
+export type KeysToRetain<A, B> = {
+  [K in keyof A]: K extends keyof B ? B[K] extends A[K] ? never : K : K
+}[keyof A]
+
+export interface None extends Record<PropertyKey, never> { }
+
+// Satisfy some or all of an Fx's required capabilities by providing
+// concrete implementations
+export const use = <CR, CP, A>(fx: Fx<CR, A>, cp: CP): Fx<Use<CR, CP>, A> =>
+  op(c => resume(k => unsafeRunFxWith(fx, { ...c as any, ...cp }, k)))
 
 // Adapt an Fx that requires one set of capabilities to
 // an environment that provides a different set.
 export const embed = <C0, C1, A>(fx: Fx<C1, A>, f: (c: C0) => C1): Fx<C0, A> =>
-  op(c0 => resume(k => runFx(fx, f(c0), k)))
+  op(c0 => resume(k => unsafeRunFxWith(fx, f(c0), k)))
