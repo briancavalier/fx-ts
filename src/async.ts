@@ -2,7 +2,7 @@
 import { AllEffects, AnyResult } from './array'
 import { Cancel, Resume, resume } from './env'
 import { fail, Fail } from './fail'
-import { doFx, Fx, get, op, runFx } from './fx'
+import { doFx, Fx, get, op, unsafeRunFxWith } from './fx'
 
 export type AsyncTask<A> = (k: (a: A) => Cancel) => Cancel
 
@@ -30,7 +30,7 @@ export const delay = (ms: number): Fx<Delay & Async, void> => doFx(function* () 
   return yield* delay(ms)
 })
 
-export const timeout = <C extends Async, A>(ms: number, fx: Fx<C, A>): Fx<C & Async & Delay & Fail, A> =>
+export const timeout = <C, A>(ms: number, fx: Fx<C, A>): Fx<C & Async & Delay & Fail, A> =>
   race(fx, delayFail(ms))
 
 const delayFail = (ms: number): Fx<Delay & Async & Fail, never> => doFx(function* () {
@@ -39,13 +39,13 @@ const delayFail = (ms: number): Fx<Delay & Async & Fail, never> => doFx(function
 })
 
 // Return computation equivalent to the input computation that produces the earliest result
-export const race = <C1 extends Async, C2 extends Async, A, B, Fxs extends readonly Fx<any, any>[]>(fx1: Fx<C1, A>, fx2: Fx<C2, B>, ...fxs: Fxs): Fx<C1 & C2 & AllEffects<Fxs>, A | B | AnyResult<Fxs>> =>
+export const race = <C1, C2, A, B, Fxs extends readonly Fx<any, any>[]>(fx1: Fx<C1, A>, fx2: Fx<C2, B>, ...fxs: Fxs): Fx<C1 & C2 & AllEffects<Fxs>, A | B | AnyResult<Fxs>> =>
   raceArray([fx1, fx2, ...fxs])
 
 const raceArray = <Fxs extends readonly Fx<any, any>[]>(fxs: Fxs): Fx<AllEffects<Fxs>, AnyResult<Fxs>> =>
   op(c => resume(k => {
     const cancels = fxs.map((fx: Fxs[number]) =>
-      runFx(fx, c, (x: AnyResult<Fxs>) => {
+      unsafeRunFxWith(fx, c, (x: AnyResult<Fxs>) => {
         cancelAll()
         return k(x)
       }))

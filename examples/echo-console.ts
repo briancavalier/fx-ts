@@ -1,11 +1,11 @@
 import { EOL } from 'os'
 import { createInterface } from 'readline'
 
-import { Async, async, defaultEnv, doFx, Fx, runFx, sync, Sync } from '../src'
+import { async, defaultEnv, doFx, Fx, FxInterface, runFx, sync, Sync, use } from '../src'
 
-type Print = { print(s: string): Fx<Sync, void> }
+type Print = { print(s: string): FxInterface<void> }
 
-type Read = { read: Fx<Async, string> }
+type Read = { read: FxInterface<string> }
 
 const main = doFx(function* ({ print, read }: Print & Read) {
   while (true) {
@@ -31,4 +31,6 @@ const capabilities = {
   })
 }
 
-runFx(main, capabilities)
+const m = use(main, capabilities)
+
+runFx(m)
